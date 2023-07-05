@@ -3,10 +3,10 @@
 ## Init
 
 ```bash
-mkdir <PROJECT NAME>
-cd <PROJECT NAME>
+mkdir project-nrf-air-quality-station
+cd project-nrf-air-quality-station
 docker run --rm -u $(id -u):$(id -g) -v $(pwd):/new -w /new -e ZEPHYR_BASE="" nordicplayground/nrfconnect-sdk:v2.4-branch \
-        bash -c "west init -m https://github.com/fgervais/<PROJECT NAME>.git . && west update"
+        bash -c "west init -m https://github.com/fgervais/project-nrf-air-quality-station.git . && west update"
 ```
 
 ## Build
@@ -54,4 +54,4 @@ pyocd flash -e sector -t nrf52840 -f 4000000 build/zephyr/zephyr.hex
 
 # Hardware
 
-https://github.com/fgervais/<PROJECT NAME>_hardware
+https://github.com/fgervais/project-nrf-air-quality-station_hardware
