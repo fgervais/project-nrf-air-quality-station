@@ -13,8 +13,6 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 void main(void)
 {
-	int ret;
-
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
 	LOG_INF("****************************************");
