@@ -23,7 +23,7 @@ typedef struct {
 } i2c_master_config_t;
 
 typedef	struct {
-	struct device *dev;
+	const struct device *dev;
 	i2c_master_config_t config;
 } i2c_master_t;
 
