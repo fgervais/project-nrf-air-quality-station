@@ -21,7 +21,7 @@ target_include_directories(lib_hvac PUBLIC
         include
 )
 
-find_package(MikroC.Core REQUIRED)
-target_link_libraries(lib_hvac PUBLIC MikroC.Core)
-find_package(MikroSDK.Driver REQUIRED)
-target_link_libraries(lib_hvac PUBLIC MikroSDK.Driver)
+# find_package(MikroC.Core REQUIRED)
+# target_link_libraries(lib_hvac PUBLIC MikroC.Core)
+# find_package(MikroSDK.Driver REQUIRED)
+# target_link_libraries(lib_hvac PUBLIC MikroSDK.Driver)
