@@ -36,8 +36,6 @@ typedef enum {
 void i2c_master_configure_default(i2c_master_config_t *config);
 err_t i2c_master_open(i2c_master_t *obj, i2c_master_config_t *config);
 err_t i2c_master_set_speed(i2c_master_t *obj, uint32_t speed);
-err_t i2c_master_open(i2c_master_t *obj, i2c_master_config_t *config);
-
 err_t i2c_master_set_slave_address(i2c_master_t *obj, uint8_t address);
 err_t i2c_master_write(i2c_master_t *obj,
 		       uint8_t *write_data_buf,
