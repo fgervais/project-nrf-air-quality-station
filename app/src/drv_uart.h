@@ -1,0 +1,1 @@
+typedef	void*	uart_t;

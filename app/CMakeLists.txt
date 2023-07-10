@@ -20,8 +20,10 @@ STRING(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+"
 
 project(app LANGUAGES C VERSION ${VERSION})
 
-
 configure_file(app_version.h.in ${CMAKE_BINARY_DIR}/app/include/app_version.h)
 target_include_directories(app PRIVATE ${CMAKE_BINARY_DIR}/app/include src)
 
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE
+       src/drv_i2c_master.c
+       src/hvac.c
+       src/main.c)
