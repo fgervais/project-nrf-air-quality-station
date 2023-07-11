@@ -8,6 +8,8 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <app_version.h>
 
 #include "hvac.h"
+#include "ha.h"
+#include "openthread.h"
 
 
 #define SLEEP_TIME_MS   10
@@ -20,6 +22,17 @@ void main(void)
 
 	uint16_t ser_num[3];
 
+	LOG_INF("\n\n🐨 MAIN START 🐨\n");
+
+	openthread_enable_ready_flag();
+
+	while (!openthread_is_ready())
+		k_sleep(K_MSEC(100));
+
+	// Something else is not ready, not sure what
+	k_sleep(K_MSEC(100));
+
+	ha_start();
 
 	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	hvac_cfg.i2c_address = HVAC_SCD40_SLAVE_ADDR;

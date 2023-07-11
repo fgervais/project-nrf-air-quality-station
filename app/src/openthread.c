@@ -39,6 +39,11 @@ void openthread_enable_ready_flag()
 		&ot_state_chaged_cb);
 }
 
+void openthread_is_ready()
+{
+	return openthread_ready;
+}
+
 void openthread_set_low_latency()
 {
 	otLinkSetPollPeriod(openthread_get_default_instance(), 10);
