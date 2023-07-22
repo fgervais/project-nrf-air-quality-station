@@ -39,7 +39,7 @@ void openthread_enable_ready_flag()
 		&ot_state_chaged_cb);
 }
 
-void openthread_is_ready()
+bool openthread_is_ready()
 {
 	return openthread_ready;
 }
