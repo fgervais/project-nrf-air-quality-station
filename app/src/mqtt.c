@@ -395,7 +395,7 @@ static int watchdog_init(void)
 {
 	int err;
 	
-	wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
+	wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
 
 	if (!device_is_ready(wdt)) {
 		LOG_ERR("%s: device not ready", wdt->name);
