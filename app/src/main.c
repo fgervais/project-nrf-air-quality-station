@@ -32,7 +32,7 @@ void main(void)
 	// Something else is not ready, not sure what
 	k_sleep(K_MSEC(100));
 
-	ha_start();
+	ha_start("", "");
 
 	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	hvac_cfg.i2c_address = HVAC_SCD40_SLAVE_ADDR;
