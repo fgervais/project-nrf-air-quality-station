@@ -12,10 +12,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "openthread.h"
 
 
-#define SLEEP_TIME_MS   10
-
-
-void main(void)
+int main(void)
 {
 	hvac_t hvac;
 	hvac_cfg_t hvac_cfg;
@@ -47,4 +44,6 @@ void main(void)
 	LOG_INF("****************************************");
 	LOG_INF("MAIN DONE");
 	LOG_INF("****************************************");
+
+	return 0;
 }
