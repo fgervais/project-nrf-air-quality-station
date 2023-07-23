@@ -54,9 +54,7 @@ int main(void)
 
 	ha_start(scd4x_serial_string, "");
 
-	LOG_INF("****************************************");
-	LOG_INF("MAIN DONE");
-	LOG_INF("****************************************");
+	LOG_INF("🏁 MAIN DONE 🏁");
 
 	return 0;
 }
