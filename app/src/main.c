@@ -6,6 +6,7 @@
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 #include <app_version.h>
+#include <stdio.h>
 
 #include "hvac.h"
 #include "ha.h"
@@ -17,7 +18,9 @@ int main(void)
 	hvac_t hvac;
 	hvac_cfg_t hvac_cfg;
 
-	uint16_t ser_num[3];
+	int ret;
+	uint16_t scd4x_serial_words[3];
+	char scd4x_serial_string[128];
 
 	LOG_INF("\n\n🐨 MAIN START 🐨\n");
 
@@ -29,17 +32,27 @@ int main(void)
 	// Something else is not ready, not sure what
 	k_sleep(K_MSEC(100));
 
-	ha_start("", "");
-
 	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	hvac_cfg.i2c_address = HVAC_SCD40_SLAVE_ADDR;
 
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
 	hvac_init(&hvac, &hvac_cfg);
-	hvac_scd40_get_serial_number(&hvac, ser_num);
-	LOG_INF("SCD40 - Serial Number : %.4d-%.4d-%.4d", 
-		ser_num[0], ser_num[1], ser_num[2]);
+	hvac_scd40_get_serial_number(&hvac, scd4x_serial_words);
+
+	ret = snprintf(scd4x_serial_string, sizeof(scd4x_serial_string),
+		       "%04x%04x%04x",
+		       scd4x_serial_words[0],
+		       scd4x_serial_words[1],
+		       scd4x_serial_words[2]);
+	if (ret < 0 && ret >= sizeof(scd4x_serial_string)) {
+		LOG_ERR("Could not set scd4x_serial_string");
+		return -ENOMEM;
+	}
+
+	LOG_INF("SCD4x - Serial Number : %s", scd4x_serial_string);
+
+	ha_start(scd4x_serial_string, "");
 
 	LOG_INF("****************************************");
 	LOG_INF("MAIN DONE");
