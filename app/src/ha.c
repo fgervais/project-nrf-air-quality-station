@@ -270,14 +270,14 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 	// Wrap this in a function?
 
 	ret = snprintf(unique_id_co2, sizeof(unique_id_co2),
-		 "%s_co2", scd4x_serial_number);
+		 "scd4x_%s_co2", scd4x_serial_number);
 	if (ret < 0 && ret >= sizeof(unique_id_co2)) {
 		LOG_ERR("Could not set unique_id_co2");
 		return -ENOMEM;
 	}
 
 	ret = snprintf(unique_id_pm25, sizeof(unique_id_pm25),
-		 "%s_pm25", sps30_serial_number);
+		 "sps30_%s_pm25", sps30_serial_number);
 	if (ret < 0 && ret >= sizeof(unique_id_pm25)) {
 		LOG_ERR("Could not set unique_id_pm25");
 		return -ENOMEM;
