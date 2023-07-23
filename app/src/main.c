@@ -52,7 +52,9 @@ int main(void)
 
 	LOG_INF("SCD4x - Serial Number : %s", scd4x_serial_string);
 
+	// COMMENT OUT FOR FIRST TEST
 	ha_start(scd4x_serial_string, "");
+	// --------------------------
 
 	LOG_INF("🏁 MAIN DONE 🏁");
 
