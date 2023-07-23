@@ -27,9 +27,10 @@ typedef	struct {
 	i2c_master_config_t config;
 } i2c_master_t;
 
+// https://github.com/MikroElektronika/mikrosdk_v2/blob/076ab1c6ce8d141ecd5aedfcba20d84338c3c59b/drv/lib/include/drv_i2c_master.h#L59
 typedef enum {
-	I2C_MASTER_SUCCESS,
-	I2C_MASTER_ERROR,
+	I2C_MASTER_SUCCESS = 0,  /*!< Success. */
+	I2C_MASTER_ERROR = (-1)  /*!< Error. */
 } i2c_master_err_t;
 
 
