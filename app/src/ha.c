@@ -183,6 +183,9 @@ static int ha_send_discovery(void)
 	char json_config[JSON_CONFIG_BUFFER_SIZE];
 	char discovery_topic[TOPIC_BUFFER_SIZE];
 
+
+	// Add a function to add other sensors
+
 	snprintf(discovery_topic, sizeof(discovery_topic),
 		 DISCOVERY_TOPIC_FORMAT_STRING, co2_config.unique_id);
 
@@ -263,6 +266,9 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 	}
 
 	ret = snprintf(co2_unique_id, sizeof(co2_unique_id),
+
+	// Wrap this in a function?
+
 		 "%s_co2", scd4x_serial_number);
 	if (ret < 0 && ret >= sizeof(co2_unique_id)) {
 		LOG_ERR("Could not set co2_unique_id");
@@ -275,6 +281,8 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 		LOG_ERR("Could not set pm25_unique_id");
 		return -ENOMEM;
 	}
+
+	// --------------------
 
 	ret = snprintf(last_will_topic, sizeof(last_will_topic),
 		 LAST_WILL_TOPIC_FORMAT_STRING, device_id_hex_string);
