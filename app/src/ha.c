@@ -55,8 +55,8 @@ static char mqtt_base_path[TOPIC_BUFFER_SIZE];
 // static char *scd4x_sn;
 // static char *sps30_sn;
 
-static char co2_unique_id[UNIQUE_ID_BUFFER_SIZE];
-static char pm25_unique_id[UNIQUE_ID_BUFFER_SIZE];
+static char unique_id_co2[UNIQUE_ID_BUFFER_SIZE];
+static char unique_id_pm25[UNIQUE_ID_BUFFER_SIZE];
 
 static char last_will_topic[TOPIC_BUFFER_SIZE];
 static const char *last_will_message = "offline";
@@ -69,7 +69,7 @@ static const char *last_will_message = "offline";
 static struct config co2_config = {
 	.base_path = mqtt_base_path,
 	.name = "Air Quality Monitor",
-	.unique_id = co2_unique_id,
+	.unique_id = unique_id_co2,
 	.device_class = "carbon_dioxide",
 	.state_class = "measurement",
 	.availability_topic = "~/available",
@@ -80,7 +80,7 @@ static struct config co2_config = {
 // static struct config pm25_config = {
 // 	.base_path = mqtt_base_path,
 // 	.name = "Air Quality Monitor",
-// 	.unique_id = pm25_unique_id,
+// 	.unique_id = unique_id_pm25,
 // 	.device_class = "pm25",
 // 	.state_class = "measurement",
 // 	.availability_topic = "~/available",
@@ -265,20 +265,21 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 		return -ENOMEM;
 	}
 
-	ret = snprintf(co2_unique_id, sizeof(co2_unique_id),
+
 
 	// Wrap this in a function?
 
+	ret = snprintf(unique_id_co2, sizeof(unique_id_co2),
 		 "%s_co2", scd4x_serial_number);
-	if (ret < 0 && ret >= sizeof(co2_unique_id)) {
-		LOG_ERR("Could not set co2_unique_id");
+	if (ret < 0 && ret >= sizeof(unique_id_co2)) {
+		LOG_ERR("Could not set unique_id_co2");
 		return -ENOMEM;
 	}
 
-	ret = snprintf(pm25_unique_id, sizeof(pm25_unique_id),
+	ret = snprintf(unique_id_pm25, sizeof(unique_id_pm25),
 		 "%s_pm25", sps30_serial_number);
-	if (ret < 0 && ret >= sizeof(pm25_unique_id)) {
-		LOG_ERR("Could not set pm25_unique_id");
+	if (ret < 0 && ret >= sizeof(unique_id_pm25)) {
+		LOG_ERR("Could not set unique_id_pm25");
 		return -ENOMEM;
 	}
 
