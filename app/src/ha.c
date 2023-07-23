@@ -18,6 +18,7 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 
 #define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s"
 #define LAST_WILL_TOPIC_FORMAT_STRING MQTT_BASE_PATH_FORMAT_STRING "/available"
+#define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/sensor/%s/config"
 
 #define AIR_QUALITY_DEVICE {			\
 	.identifiers = device_id_hex_string,	\
@@ -176,8 +177,6 @@ static int get_device_id_string(char *id_string, size_t id_string_len)
 // https://www.home-assistant.io/integrations/mqtt/#discovery-topic
 
 
-// Add .unique_id
-#define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/sensor/%s/config"
 static int ha_send_discovery(void)
 {
 	int ret;
