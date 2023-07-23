@@ -16,7 +16,8 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #define JSON_CONFIG_BUFFER_SIZE		1024
 #define UNIQUE_ID_BUFFER_SIZE		64
 
-#define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s/"
+#define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s"
+#define LAST_WILL_TOPIC_FORMAT_STRING MQTT_BASE_PATH_FORMAT_STRING "/available"
 
 #define AIR_QUALITY_DEVICE {			\
 	.identifiers = device_id_hex_string,	\
@@ -56,6 +57,9 @@ static char mqtt_base_path[TOPIC_BUFFER_SIZE];
 static char co2_unique_id[UNIQUE_ID_BUFFER_SIZE];
 static char pm25_unique_id[UNIQUE_ID_BUFFER_SIZE];
 
+static char last_will_topic[TOPIC_BUFFER_SIZE];
+static const char *last_will_message = "offline";
+
 
 // static void callback_sub_set_mode(const char *payload);
 // static void callback_sub_set_temperature(const char *payload);
@@ -93,9 +97,6 @@ static struct config co2_config = {
 // 		.callback = callback_sub_set_temperature,
 // 	},
 // };
-
-static const char *last_will_topic = "home/room/kitchen/air_quality/%s/available";
-static const char *last_will_message = "offline";
 
 static const struct json_obj_descr device_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct device, identifiers,	 JSON_TOK_STRING),
@@ -273,6 +274,13 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 		 "%s_pm25", sps30_serial_number);
 	if (ret < 0 && ret >= sizeof(pm25_unique_id)) {
 		LOG_ERR("Could not set pm25_unique_id");
+		return -ENOMEM;
+	}
+
+	ret = snprintf(last_will_topic, sizeof(last_will_topic),
+		 LAST_WILL_TOPIC_FORMAT_STRING, device_id_hex_string);
+	if (ret < 0 && ret >= sizeof(last_will_topic)) {
+		LOG_ERR("Could not set last_will_topic");
 		return -ENOMEM;
 	}
 
