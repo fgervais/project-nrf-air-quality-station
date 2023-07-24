@@ -326,35 +326,128 @@ err_t hvac_sps30_i2c_write_data ( hvac_t *ctx, uint16_t reg, uint16_t tx_data )
     return error_flag;
 }
 
-err_t hvac_sps30_i2c_read_data ( hvac_t *ctx, uint16_t reg, uint16_t *rx_data )
+err_t hvac_sps30_i2c_read_data_as_bytes ( hvac_t *ctx, uint16_t reg, uint8_t *rx_data, size_t num_words )
 {
+    size_t read_len = num_words * ( HVAC_SPS30_WORD_SIZE + HVAC_SPS30_CRC8_LEN );
+    size_t i, j;
     uint8_t tx_buf[ 2 ];
-    uint8_t rx_buf[ 3 ];
-    uint16_t result;
+    uint8_t rx_buf[ read_len ];
+    // uint16_t result;
     err_t error_flag;
-    
+
     tx_buf[ 0 ] = ( uint8_t ) ( reg >> 8 );
     tx_buf[ 1 ] = ( uint8_t ) reg;
 
     i2c_master_set_slave_address( &ctx->i2c, HVAC_SPS30_SLAVE_ADDR );
 
     error_flag = i2c_master_write( &ctx->i2c, tx_buf, 2 );
-    error_flag |= i2c_master_read( &ctx->i2c, rx_buf, 3 );
-    
-    i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
-    
-    result = rx_buf[ 0 ];
-    result <<= 8;
-    result |= rx_buf[ 1 ];
-
-    if ( rx_buf[ 2 ] != dev_calc_crc( &rx_buf[ 0 ] ) )
+    if (error_flag < 0)
     {
-        error_flag = HVAC_ERROR;
+        return error_flag;
     }
 
-    *rx_data = result;
+    error_flag = i2c_master_read( &ctx->i2c, rx_buf, read_len );
+    if (error_flag < 0)
+    {
+        return error_flag;
+    }
 
-    return error_flag;
+    i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
+
+    /* check the CRC for each word */
+    for ( i = 0, j = 0; i < read_len; i += HVAC_SPS30_WORD_SIZE + HVAC_SPS30_CRC8_LEN )
+    {
+
+        // ret = sensirion_i2c_check_crc(&buf8[i], SENSIRION_WORD_SIZE,
+        //                               buf8[i + SENSIRION_WORD_SIZE]);
+        // if (ret != NO_ERROR)
+        //     return ret;
+
+        if ( rx_buf[ i + HVAC_SPS30_WORD_SIZE ] != dev_calc_crc( &rx_buf[ i ] ) )
+        {
+            return HVAC_ERROR;
+        }
+
+        // data[j++] = buf8[i];
+        // data[j++] = buf8[i + 1];
+
+        rx_data[j++] = rx_buf[ i ];
+        rx_data[j++] = rx_buf[ i + 1 ];
+    }
+
+
+
+
+    // result = rx_buf[ 0 ];
+    // result <<= 8;
+    // result |= rx_buf[ 1 ];
+
+    // if ( rx_buf[ 2 ] != dev_calc_crc( &rx_buf[ 0 ] ) )
+    // {
+    //     error_flag = HVAC_ERROR;
+    // }
+
+    // *rx_data = result;
+
+    return HVAC_OK;
+}
+
+err_t hvac_sps30_i2c_read_data ( hvac_t *ctx, uint16_t reg, uint16_t *rx_data )
+{
+    // uint8_t tx_buf[ 2 ];
+    // uint8_t rx_buf[ 3 ];
+    // uint16_t result;
+    err_t error_flag;
+    
+    // tx_buf[ 0 ] = ( uint8_t ) ( reg >> 8 );
+    // tx_buf[ 1 ] = ( uint8_t ) reg;
+
+    // i2c_master_set_slave_address( &ctx->i2c, HVAC_SPS30_SLAVE_ADDR );
+
+    // error_flag = i2c_master_write( &ctx->i2c, tx_buf, 2 );
+    // error_flag |= i2c_master_read( &ctx->i2c, rx_buf, 3 );
+    
+    // i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
+    
+    // result = rx_buf[ 0 ];
+    // result <<= 8;
+    // result |= rx_buf[ 1 ];
+
+    // if ( rx_buf[ 2 ] != dev_calc_crc( &rx_buf[ 0 ] ) )
+    // {
+    //     error_flag = HVAC_ERROR;
+    // }
+
+    // *rx_data = result;
+
+    // return error_flag;
+
+
+
+
+
+    // int16_t ret;
+    // uint8_t i;
+
+    // ret = sensirion_i2c_read_words_as_bytes(address, (uint8_t*)data_words,
+    //                                         num_words);
+    // if (ret != NO_ERROR)
+    //     return ret;
+
+
+    error_flag = hvac_sps30_i2c_read_data_as_bytes( ctx, reg,
+                        ( uint8_t * ) rx_data, sizeof( *rx_data ) );
+    if (error_flag < 0)
+    {
+        return error_flag;
+    }
+
+    // for (i = 0; i < num_words; ++i) {
+    const uint8_t * word_bytes = ( uint8_t * ) rx_data;
+    *rx_data = ( ( uint16_t ) word_bytes[0] << 8 ) | word_bytes[1];
+    // }
+
+    return HVAC_OK;
 }
 
 void hvac_sps30_start_measurement ( hvac_t *ctx )
@@ -430,6 +523,52 @@ void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c
 
     temp = dev_calc_concent( ctx, 10, rx_buf );
     m_n_c_data->typ_ptcl_size = dev_ieee_754_floating_point_convert( temp );
+}
+
+err_t hvac_sps30_get_serial_number ( hvac_t *ctx, char *serial_number,
+                                    size_t serial_buffer_size )
+{
+    // int16_t error;
+
+    // error = sensirion_i2c_write_cmd(SPS30_I2C_ADDRESS, SPS_CMD_GET_SERIAL);
+
+    // if (error != NO_ERROR) {
+    //     return error;
+    // }
+
+    // error = sensirion_i2c_read_words_as_bytes(
+    //     SPS30_I2C_ADDRESS, (uint8_t*)serial, SPS30_SERIAL_NUM_WORDS);
+
+    // /* ensure a final '\0'. The firmware should always set this so this is just
+    //  * in case something goes wrong.
+    //  */
+    // serial[SPS30_MAX_SERIAL_LEN - 1] = '\0';
+
+    // return error;
+
+
+
+
+    // uint16_t rx_buf;
+    // uint8_t ready_flag;
+    err_t error_flag;
+
+
+    error_flag = hvac_sps30_i2c_read_data_as_bytes(
+                    ctx, HVAC_SPS30_I2C_READ_SERIAL_NUMBER,
+                    ( uint8_t * ) serial_number,
+                    serial_buffer_size / HVAC_SPS30_WORD_SIZE);
+    if ( error_flag )
+    {
+        return error_flag;
+    }
+
+
+    // ready_flag = ( uint8_t ) rx_buf;
+    // ready_flag &= 0x01;
+    // return ready_flag;
+
+    return HVAC_OK;
 }
 
 // --------------------------------------------- PRIVATE FUNCTION DEFINITIONS 
