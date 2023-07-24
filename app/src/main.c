@@ -21,6 +21,7 @@ int main(void)
 	int ret;
 	uint16_t scd4x_serial_words[3];
 	char scd4x_serial_string[128];
+	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
 
 	LOG_INF("\n\n🐨 MAIN START 🐨\n");
 
@@ -51,6 +52,11 @@ int main(void)
 	}
 
 	LOG_INF("SCD4x - Serial Number : %s", scd4x_serial_string);
+
+	hvac_sps30_get_serial_number(&hvac,
+		sps30_serial_string, sizeof(sps30_serial_string));
+
+	LOG_INF("SPS30 - Serial Number : %s", sps30_serial_string);
 
 	// COMMENT OUT FOR FIRST TEST
 	ha_start(scd4x_serial_string, "");
