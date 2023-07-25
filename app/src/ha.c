@@ -39,7 +39,7 @@ struct ha_device {
 	const char *manufacturer;
 };
 
-struct ha_config {
+struct ha_sensor_config {
 	const char *base_path;
 	const char *name;
 	const char *unique_id;
@@ -110,14 +110,14 @@ static const struct json_obj_descr device_descr[] = {
 };
 
 static const struct json_obj_descr config_descr[] = {
-	JSON_OBJ_DESCR_PRIM_NAMED(struct ha_config, "~", base_path,	JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct ha_config, name,			JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct ha_config, unique_id,		JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct ha_config, device_class,		JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct ha_config, state_class,		JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct ha_config, availability_topic,	JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct ha_config, state_topic,		JSON_TOK_STRING),
-	JSON_OBJ_DESCR_OBJECT(struct ha_config, dev, device_descr),
+	JSON_OBJ_DESCR_PRIM_NAMED(struct ha_sensor_config, "~", base_path,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, name,			JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, unique_id,			JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, device_class,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_class,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, availability_topic,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_topic,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_OBJECT(struct ha_sensor_config, dev, device_descr),
 };
 
 // static void (*mode_change_callback)(const char *mode) = NULL;
@@ -178,7 +178,7 @@ static int get_device_id_string(char *id_string, size_t id_string_len)
 // https://www.home-assistant.io/integrations/mqtt/#discovery-topic
 
 
-static int ha_send_discovery(struct ha_config *conf)
+static int ha_send_discovery(struct ha_sensor_config *conf)
 {
 	int ret;
 	char json_config[JSON_CONFIG_BUFFER_SIZE];
@@ -238,11 +238,11 @@ static int ha_send_discovery(struct ha_config *conf)
 // 	return 0;
 // }
 
-int ha_register_sensor(struct sensor *s)
+int ha_register_sensor(struct ha_sensor *s)
 {
 	int ret;
 	char state_topic[TOPIC_BUFFER_SIZE];
-	struct ha_config ha_sensor_config = {
+	struct ha_sensor_config ha_sensor_config = {
 		.base_path = mqtt_base_path,
 		.name = s->name,
 		.unique_id = s->unique_id,

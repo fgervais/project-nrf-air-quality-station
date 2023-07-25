@@ -1,7 +1,7 @@
 #ifndef HA_H_
 #define HA_H_
 
-struct sensor {
+struct ha_sensor {
 	const char *name;
 	const char *unique_id;
 	const char *device_class;
