@@ -8,6 +8,7 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #include <stdlib.h>
 #include <app_version.h>
 
+#include "ha.h"
 #include "mqtt.h"
 
 
@@ -29,7 +30,7 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 	.manufacturer = "François Gervais",	\
 }
 
-struct device {
+struct ha_device {
 	const char *identifiers;
 	const char *name;
 	const char *sw_version;
@@ -38,7 +39,7 @@ struct device {
 	const char *manufacturer;
 };
 
-struct config {
+struct ha_config {
 	const char *base_path;
 	const char *name;
 	const char *unique_id;
@@ -46,7 +47,7 @@ struct config {
 	const char *state_class;
 	const char *availability_topic;
 	const char *state_topic;
-	struct device dev;
+	struct ha_device dev;
 };
 
 
@@ -55,8 +56,8 @@ static char mqtt_base_path[TOPIC_BUFFER_SIZE];
 // static char *scd4x_sn;
 // static char *sps30_sn;
 
-static char unique_id_co2[UNIQUE_ID_BUFFER_SIZE];
-static char unique_id_pm25[UNIQUE_ID_BUFFER_SIZE];
+// static char unique_id_co2[UNIQUE_ID_BUFFER_SIZE];
+// static char unique_id_pm25[UNIQUE_ID_BUFFER_SIZE];
 
 static char last_will_topic[TOPIC_BUFFER_SIZE];
 static const char *last_will_message = "offline";
@@ -66,16 +67,16 @@ static const char *last_will_message = "offline";
 // static void callback_sub_set_temperature(const char *payload);
 
 
-static struct config co2_config = {
-	.base_path = mqtt_base_path,
-	.name = "Air Quality Monitor",
-	.unique_id = unique_id_co2,
-	.device_class = "carbon_dioxide",
-	.state_class = "measurement",
-	.availability_topic = "~/available",
-	.state_topic = "~/sensor/co2/state",
-	.dev = AIR_QUALITY_DEVICE,
-};
+// static struct config co2_config = {
+// 	.base_path = mqtt_base_path,
+// 	.name = "Air Quality Monitor - CO2",
+// 	.unique_id = unique_id_co2,
+// 	.device_class = "carbon_dioxide",
+// 	.state_class = "measurement",
+// 	.availability_topic = "~/available",
+// 	.state_topic = "~/sensor/co2/state",
+// 	.dev = AIR_QUALITY_DEVICE,
+// };
 
 // static struct config pm25_config = {
 // 	.base_path = mqtt_base_path,
@@ -100,23 +101,23 @@ static struct config co2_config = {
 // };
 
 static const struct json_obj_descr device_descr[] = {
-	JSON_OBJ_DESCR_PRIM(struct device, identifiers,	 JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct device, name,	 JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct device, sw_version,	 JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct device, hw_version,	 JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct device, model,	 JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct device, manufacturer, JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_device, identifiers,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_device, name,	 	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_device, sw_version,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_device, hw_version,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_device, model,	 	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_device, manufacturer, 	JSON_TOK_STRING),
 };
 
 static const struct json_obj_descr config_descr[] = {
-	JSON_OBJ_DESCR_PRIM_NAMED(struct config, "~", base_path,	JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct config, name,			JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct config, unique_id,			JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct config, device_class,		JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct config, state_class,			JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct config, availability_topic,		JSON_TOK_STRING),
-	JSON_OBJ_DESCR_PRIM(struct config, state_topic,			JSON_TOK_STRING),
-	JSON_OBJ_DESCR_OBJECT(struct config, dev, device_descr),
+	JSON_OBJ_DESCR_PRIM_NAMED(struct ha_config, "~", base_path,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_config, name,			JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_config, unique_id,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_config, device_class,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_config, state_class,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_config, availability_topic,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_config, state_topic,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_OBJECT(struct ha_config, dev, device_descr),
 };
 
 // static void (*mode_change_callback)(const char *mode) = NULL;
@@ -177,22 +178,19 @@ static int get_device_id_string(char *id_string, size_t id_string_len)
 // https://www.home-assistant.io/integrations/mqtt/#discovery-topic
 
 
-static int ha_send_discovery(void)
+static int ha_send_discovery(struct ha_config *conf)
 {
 	int ret;
 	char json_config[JSON_CONFIG_BUFFER_SIZE];
 	char discovery_topic[TOPIC_BUFFER_SIZE];
 
-
-	// Add a function to add other sensors
-
 	snprintf(discovery_topic, sizeof(discovery_topic),
-		 DISCOVERY_TOPIC_FORMAT_STRING, co2_config.unique_id);
+		 DISCOVERY_TOPIC_FORMAT_STRING, conf->unique_id);
 
 	LOG_DBG("discovery topic: %s", discovery_topic);
 
 	ret = json_obj_encode_buf(config_descr, ARRAY_SIZE(config_descr),
-				  &co2_config, json_config, sizeof(json_config));
+				  &conf, json_config, sizeof(json_config));
 	if (ret < 0) {
 		LOG_ERR("Could not encode JSON (%d)", ret);
 		return ret;
@@ -240,6 +238,38 @@ static int ha_send_discovery(void)
 // 	return 0;
 // }
 
+int ha_register_sensor(struct sensor *s)
+{
+	int ret;
+	char state_topic[TOPIC_BUFFER_SIZE];
+	struct ha_config ha_sensor_config = {
+		.base_path = mqtt_base_path,
+		.name = s->name,
+		.unique_id = s->unique_id,
+		.device_class = s->device_class,
+		.state_class = s->state_class,
+		.availability_topic = "~/available",
+		.state_topic = state_topic,
+		.dev = AIR_QUALITY_DEVICE,
+	};
+
+	ret = snprintf(state_topic, sizeof(state_topic),
+		       "~/sensor/%s/state", s->unique_id);
+	if (ret < 0 && ret >= sizeof(state_topic)) {
+		LOG_ERR("Could not set %s state_topic", s->unique_id);
+		return -ENOMEM;
+	}
+
+	LOG_INF("📝 send discovery");
+	ret = ha_send_discovery(&ha_sensor_config);
+	if (ret < 0) {
+		LOG_ERR("Could not send discovery");
+		return ret;
+	}
+
+	return 0;
+}
+
 int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 {
 	int ret;
@@ -255,8 +285,8 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 		return ret;
 	}
 
-	LOG_INF("Device ID: %s", co2_config.dev.identifiers);
-	LOG_INF("Version: %s", co2_config.dev.sw_version);
+	// LOG_INF("Device ID: %s", co2_config.dev.identifiers);
+	// LOG_INF("Version: %s", co2_config.dev.sw_version);
 
 	ret = snprintf(mqtt_base_path, sizeof(mqtt_base_path),
 		 MQTT_BASE_PATH_FORMAT_STRING, device_id_hex_string);
@@ -269,19 +299,19 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 
 	// Wrap this in a function?
 
-	ret = snprintf(unique_id_co2, sizeof(unique_id_co2),
-		 "scd4x_%s_co2", scd4x_serial_number);
-	if (ret < 0 && ret >= sizeof(unique_id_co2)) {
-		LOG_ERR("Could not set unique_id_co2");
-		return -ENOMEM;
-	}
+	// ret = snprintf(unique_id_co2, sizeof(unique_id_co2),
+	// 	 "scd4x_%s_co2", scd4x_serial_number);
+	// if (ret < 0 && ret >= sizeof(unique_id_co2)) {
+	// 	LOG_ERR("Could not set unique_id_co2");
+	// 	return -ENOMEM;
+	// }
 
-	ret = snprintf(unique_id_pm25, sizeof(unique_id_pm25),
-		 "sps30_%s_pm25", sps30_serial_number);
-	if (ret < 0 && ret >= sizeof(unique_id_pm25)) {
-		LOG_ERR("Could not set unique_id_pm25");
-		return -ENOMEM;
-	}
+	// ret = snprintf(unique_id_pm25, sizeof(unique_id_pm25),
+	// 	 "sps30_%s_pm25", sps30_serial_number);
+	// if (ret < 0 && ret >= sizeof(unique_id_pm25)) {
+	// 	LOG_ERR("Could not set unique_id_pm25");
+	// 	return -ENOMEM;
+	// }
 
 	// --------------------
 
@@ -298,8 +328,7 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 		return ret;
 	}
 
-	LOG_INF("✏️  send discovery");
-	ha_send_discovery();
+	// ha_send_discovery();
 	// LOG_INF("✏️  subscribe to topics");
 	// ha_subscribe_to_topics();
 

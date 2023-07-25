@@ -59,7 +59,7 @@ int main(void)
 	LOG_INF("SPS30 - Serial Number : %s", sps30_serial_string);
 
 	// COMMENT OUT FOR FIRST TEST
-	ha_start(scd4x_serial_string, "");
+	// ha_start(scd4x_serial_string, "");
 	// --------------------------
 
 	LOG_INF("🏁 MAIN DONE 🏁");
