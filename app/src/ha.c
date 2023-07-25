@@ -238,38 +238,6 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 // 	return 0;
 // }
 
-int ha_register_sensor(struct ha_sensor *sensor)
-{
-	int ret;
-	char state_topic[TOPIC_BUFFER_SIZE];
-	struct ha_sensor_config ha_sensor_config = {
-		.base_path = mqtt_base_path,
-		.name = sensor->name,
-		.unique_id = sensor->unique_id,
-		.device_class = sensor->device_class,
-		.state_class = sensor->state_class,
-		.availability_topic = "~/available",
-		.state_topic = state_topic,
-		.dev = AIR_QUALITY_DEVICE,
-	};
-
-	ret = snprintf(state_topic, sizeof(state_topic),
-		       "~/sensor/%s/state", sensor->unique_id);
-	if (ret < 0 && ret >= sizeof(state_topic)) {
-		LOG_ERR("Could not set %s state_topic", sensor->unique_id);
-		return -ENOMEM;
-	}
-
-	LOG_INF("📝 send discovery");
-	ret = ha_send_discovery(&ha_sensor_config);
-	if (ret < 0) {
-		LOG_ERR("Could not send discovery");
-		return ret;
-	}
-
-	return 0;
-}
-
 int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 {
 	int ret;
@@ -331,6 +299,38 @@ int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
 	// ha_send_discovery();
 	// LOG_INF("✏️  subscribe to topics");
 	// ha_subscribe_to_topics();
+
+	return 0;
+}
+
+int ha_register_sensor(struct ha_sensor *sensor)
+{
+	int ret;
+	char state_topic[TOPIC_BUFFER_SIZE];
+	struct ha_sensor_config ha_sensor_config = {
+		.base_path = mqtt_base_path,
+		.name = sensor->name,
+		.unique_id = sensor->unique_id,
+		.device_class = sensor->device_class,
+		.state_class = sensor->state_class,
+		.availability_topic = "~/available",
+		.state_topic = state_topic,
+		.dev = AIR_QUALITY_DEVICE,
+	};
+
+	ret = snprintf(state_topic, sizeof(state_topic),
+		       "~/sensor/%s/state", sensor->unique_id);
+	if (ret < 0 && ret >= sizeof(state_topic)) {
+		LOG_ERR("Could not set %s state_topic", sensor->unique_id);
+		return -ENOMEM;
+	}
+
+	LOG_INF("📝 send discovery");
+	ret = ha_send_discovery(&ha_sensor_config);
+	if (ret < 0) {
+		LOG_ERR("Could not send discovery");
+		return ret;
+	}
 
 	return 0;
 }
