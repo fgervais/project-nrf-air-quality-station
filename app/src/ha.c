@@ -238,25 +238,25 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 // 	return 0;
 // }
 
-int ha_register_sensor(struct ha_sensor *s)
+int ha_register_sensor(struct ha_sensor *sensor)
 {
 	int ret;
 	char state_topic[TOPIC_BUFFER_SIZE];
 	struct ha_sensor_config ha_sensor_config = {
 		.base_path = mqtt_base_path,
-		.name = s->name,
-		.unique_id = s->unique_id,
-		.device_class = s->device_class,
-		.state_class = s->state_class,
+		.name = sensor->name,
+		.unique_id = sensor->unique_id,
+		.device_class = sensor->device_class,
+		.state_class = sensor->state_class,
 		.availability_topic = "~/available",
 		.state_topic = state_topic,
 		.dev = AIR_QUALITY_DEVICE,
 	};
 
 	ret = snprintf(state_topic, sizeof(state_topic),
-		       "~/sensor/%s/state", s->unique_id);
+		       "~/sensor/%s/state", sensor->unique_id);
 	if (ret < 0 && ret >= sizeof(state_topic)) {
-		LOG_ERR("Could not set %s state_topic", s->unique_id);
+		LOG_ERR("Could not set %s state_topic", sensor->unique_id);
 		return -ENOMEM;
 	}
 
