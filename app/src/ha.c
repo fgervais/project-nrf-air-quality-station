@@ -238,7 +238,7 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 // 	return 0;
 // }
 
-int ha_start(char *scd4x_serial_number, char *sps30_serial_number)
+int ha_start()
 {
 	int ret;
 
