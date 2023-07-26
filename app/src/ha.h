@@ -6,6 +6,9 @@ struct ha_sensor {
 	const char *unique_id;
 	const char *device_class;
 	const char *state_class;
+
+	char brief_state_topic[128];
+	char full_state_topic[128];
 };
 
 int ha_start();

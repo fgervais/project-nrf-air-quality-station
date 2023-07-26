@@ -318,19 +318,48 @@ int ha_register_sensor(struct ha_sensor *sensor)
 		.dev = AIR_QUALITY_DEVICE,
 	};
 
-	ret = snprintf(state_topic, sizeof(state_topic),
+	LOG_INF("📝 registering sensor: %s", sensor->unique_id);
+
+	ret = snprintf(sensor->brief_state_topic, sizeof(sensor->brief_state_topic),
 		       "~/sensor/%s/state", sensor->unique_id);
-	if (ret < 0 && ret >= sizeof(state_topic)) {
-		LOG_ERR("Could not set %s state_topic", sensor->unique_id);
+	if (ret < 0 && ret >= sizeof(sensor->brief_state_topic)) {
+		LOG_ERR("Could not set brief_state_topic");
 		return -ENOMEM;
 	}
 
-	LOG_INF("📝 send discovery");
+	ret = snprintf(sensor->full_state_topic, sizeof(sensor->full_state_topic),
+		 "%s%s",
+		 mqtt_base_path,
+		 sensor->brief_state_topic + 1);
+	if (ret < 0 && ret >= sizeof(sensor->brief_state_topic)) {
+		LOG_ERR("Could not set full_state_topic");
+		return -ENOMEM;
+	}
+
+	LOG_INF("📖 send discovery");
 	ret = ha_send_discovery(&ha_sensor_config);
 	if (ret < 0) {
 		LOG_ERR("Could not send discovery");
 		return ret;
 	}
+
+	return 0;
+}
+
+int ha_send_value(struct ha_sensor *sensor, double value)
+{
+	int ret;
+	char value_string[16];
+
+	ret = snprintf(value_string, sizeof(value_string),
+		       "%g",
+		       value);
+	if (ret < 0 && ret >= sizeof(value_string)) {
+		LOG_ERR("Could not set value_string");
+		return -ENOMEM;
+	}
+
+	mqtt_publish_to_topic(sensor->full_state_topic, value_string, false);
 
 	return 0;
 }
