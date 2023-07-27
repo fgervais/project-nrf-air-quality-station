@@ -553,6 +553,10 @@ err_t hvac_sps30_get_serial_number ( hvac_t *ctx, char *serial_number,
     // uint8_t ready_flag;
     err_t error_flag;
 
+    if ( serial_buffer_size < HVAC_SPS30_MAX_SERIAL_LEN )
+    {
+        return HVAC_ERROR;
+    }
 
     error_flag = hvac_sps30_i2c_read_data_as_bytes(
                     ctx, HVAC_SPS30_I2C_READ_SERIAL_NUMBER,
