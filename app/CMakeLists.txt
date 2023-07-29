@@ -23,6 +23,7 @@ target_include_directories(app PRIVATE ${CMAKE_BINARY_DIR}/app/include src)
 target_sources(app PRIVATE
        src/drv_i2c_master.c
        src/hvac.c
+       src/temphum24.c
        src/openthread.c
        src/mqtt.c
        src/ha.c
