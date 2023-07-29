@@ -22,7 +22,7 @@ typedef struct
 } digital_in_t;
 
 err_t digital_in_init ( digital_in_t *in, pin_name_t name );
-err_t digital_in_read ( digital_in_t *in );
+uint8_t digital_in_read ( digital_in_t *in );
 
 #ifdef __cplusplus
 }
