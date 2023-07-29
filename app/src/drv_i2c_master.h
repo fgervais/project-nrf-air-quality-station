@@ -4,15 +4,14 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
 
+#include "drv_name.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define HAL_PIN_NC			NULL
 #define I2C_MASTER_SPEED_STANDARD	0
-
-typedef	int32_t	err_t;
-typedef	void* pin_name_t;
 
 typedef struct {
 	uint8_t addr;
