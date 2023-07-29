@@ -5,8 +5,8 @@
 
 void i2c_master_configure_default(i2c_master_config_t *config)
 {
-	config->scl = NULL;
-	config->sda = NULL;
+	config->scl = -1;
+	config->sda = -1;
 }
 
 err_t i2c_master_open(i2c_master_t *obj, i2c_master_config_t *config)

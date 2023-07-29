@@ -5,7 +5,7 @@
 
 err_t digital_out_init ( digital_out_t *out, pin_name_t name )
 {
-	return 0;
+	return gpio_pin_configure(out->port, name, GPIO_OUTPUT_LOW);
 }
 
 err_t digital_out_high ( digital_out_t *out )

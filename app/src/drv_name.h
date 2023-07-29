@@ -5,11 +5,12 @@
 extern "C" {
 #endif
 
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 
 
 typedef	int32_t	err_t;
-typedef	void* pin_name_t;
+typedef	gpio_pin_t pin_name_t;
 
 static inline void Delay_100ms ( void ) {
 	k_sleep( K_MSEC( 1 ) );

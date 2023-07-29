@@ -9,6 +9,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <stdio.h>
 
 #include "hvac.h"
+#include "temphum24.h"
 #include "ha.h"
 #include "openthread.h"
 
@@ -71,6 +72,9 @@ int main(void)
 	hvac_t hvac;
 	hvac_cfg_t hvac_cfg;
 
+	temphum24_t temphum24;
+	temphum24_cfg_t temphum24_cfg;
+
 	int ret;
 	char scd4x_serial_string[128];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
@@ -96,6 +100,12 @@ int main(void)
 
 	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	hvac_cfg.i2c_address = HVAC_SCD40_SLAVE_ADDR;
+
+	temphum24.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+	temphum24.rst.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	temphum24.alert.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	temphum24_cfg.rst = 5;
+	temphum24_cfg.alert = 29;
 
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
