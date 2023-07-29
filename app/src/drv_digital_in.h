@@ -2,7 +2,6 @@
 #define DRV_DIGITAL_IN_H_
 
 #include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
 
 #include "drv_name.h"
 

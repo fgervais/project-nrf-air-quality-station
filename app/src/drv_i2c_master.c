@@ -1,3 +1,5 @@
+#include <zephyr/drivers/i2c.h>
+
 #include "drv_i2c_master.h"
 
 
