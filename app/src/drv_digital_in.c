@@ -8,5 +8,5 @@ err_t digital_in_init( digital_in_t *in, pin_name_t name )
 
 uint8_t digital_in_read ( digital_in_t *in )
 {
-	return 0;
+	return gpio_pin_get(in->port, in->pin);
 }

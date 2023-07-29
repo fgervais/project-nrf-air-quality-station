@@ -2,6 +2,7 @@
 #define DRV_DIGITAL_IN_H_
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "drv_name.h"
 
@@ -18,7 +19,8 @@ typedef enum
 
 typedef struct
 {
-	const struct device *dev;
+	const struct device *port;
+	gpio_pin_t pin;
 } digital_in_t;
 
 err_t digital_in_init ( digital_in_t *in, pin_name_t name );

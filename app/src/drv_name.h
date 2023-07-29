@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#include <zephyr/kernel.h>
+
+
 typedef	int32_t	err_t;
 typedef	void* pin_name_t;
 
