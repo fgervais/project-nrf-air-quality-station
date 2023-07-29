@@ -159,6 +159,8 @@ int main(void)
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
 
+	float temperature = 0, humidity = 0;
+
 	while (1) {
 		hvac_scd40_read_measurement(&hvac, &hvac_data);
 
@@ -182,6 +184,17 @@ int main(void)
 		LOG_INF("    ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
 		LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
 		LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
+
+		ret = temphum24_read_temp_and_rh(&temphum24,
+						 &temperature, &humidity);
+		if (ret < 0) {
+			LOG_ERR("Could not read temperture and humidity");
+			return ret;
+		}
+
+		LOG_INF("HDC302x");
+		LOG_INF("├── Temperature: %.2f °C", temperature);
+		LOG_INF("└── Humidity: %.1f %%RH", humidity);
 
 		LOG_INF("💤 End of main loop 💤");
 		k_sleep(K_SECONDS(60));
