@@ -23,8 +23,8 @@ typedef struct
 } digital_out_t;
 
 err_t digital_out_init ( digital_out_t *out, pin_name_t name );
-err_t digital_out_high( digital_out_t *out );
-err_t digital_out_low( digital_out_t *out );
+err_t digital_out_high ( digital_out_t *out );
+err_t digital_out_low ( digital_out_t *out );
 
 #ifdef __cplusplus
 }
