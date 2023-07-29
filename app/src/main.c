@@ -133,10 +133,10 @@ int main(void)
 		return ret;
 	}
 
-	// COMMENT OUT FOR FIRST TEST
-	// ha_start();
-	// int ha_register_sensor(&co2_sensor);
-	// --------------------------
+	return 0;
+
+	ha_start();
+	ha_register_sensor(&co2_sensor);
 
 	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	hvac_sps30_start_measurement (&hvac);
