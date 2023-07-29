@@ -5,8 +5,8 @@
 
 void i2c_master_configure_default(i2c_master_config_t *config)
 {
-	config->scl = -1;
-	config->sda = -1;
+	config->scl = HAL_PIN_NC;
+	config->sda = HAL_PIN_NC;
 }
 
 err_t i2c_master_open(i2c_master_t *obj, i2c_master_config_t *config)

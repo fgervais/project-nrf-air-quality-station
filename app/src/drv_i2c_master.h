@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define HAL_PIN_NC			NULL
+#define HAL_PIN_NC			-1
 #define I2C_MASTER_SPEED_STANDARD	0
 
 typedef struct {
