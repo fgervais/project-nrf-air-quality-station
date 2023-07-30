@@ -159,7 +159,7 @@ int main(void)
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
 
-	float temperature = 0, humidity = 0;
+	float temperature, humidity;
 
 	while (1) {
 		hvac_scd40_read_measurement(&hvac, &hvac_data);
