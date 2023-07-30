@@ -19,6 +19,7 @@ typedef enum
 typedef struct
 {
 	const struct device *port;
+	gpio_pin_t pin;
 } digital_out_t;
 
 err_t digital_out_init ( digital_out_t *out, pin_name_t name );

@@ -112,6 +112,12 @@ int main(void)
 	temphum24.alert.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 	temphum24_cfg.rst = 5;
 	temphum24_cfg.alert = 29;
+	ret = temphum24_init(&temphum24, &temphum24_cfg);
+	if (ret < 0) {
+		LOG_ERR("Could not initialize hdc302x");
+		return ret;
+	}
+	// err_t temphum24_default_cfg(temphum24_t *ctx) 
 
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
