@@ -117,7 +117,6 @@ int main(void)
 		LOG_ERR("Could not initialize hdc302x");
 		return ret;
 	}
-	// err_t temphum24_default_cfg(temphum24_t *ctx) 
 
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
@@ -161,6 +160,11 @@ int main(void)
 
 	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	hvac_sps30_start_measurement (&hvac);
+	ret = temphum24_default_cfg(&temphum24);
+	if (ret < 0) {
+		LOG_ERR("Could not start hdc302x");
+		return ret;
+	}
 
 	k_sleep(K_SECONDS(10));
 
