@@ -100,6 +100,11 @@ int main(void)
 
 	hvac_cfg_setup(&hvac_cfg);
 	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+	ret = hvac_init(&hvac, &hvac_cfg);
+	if (ret < 0) {
+		LOG_ERR("Could not initialize hvac");
+		return ret;
+	}
 
 	temphum24_cfg_setup(&temphum24_cfg);
 	temphum24.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
@@ -110,7 +115,6 @@ int main(void)
 
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
-	hvac_init(&hvac, &hvac_cfg);
 	ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
 					 sizeof(scd4x_serial_string));
 	if (ret < 0) {
