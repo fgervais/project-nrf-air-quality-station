@@ -284,6 +284,29 @@ err_t temphum24_stop_measurement ( temphum24_t *ctx )
     return temphum24_write_cmd ( ctx, TEMPHUM24_CMD_AUTO_MEAS_EXIT );
 }
 
+err_t temphum24_get_serial_number ( temphum24_t *ctx, uint64_t *serial_number )
+{
+    uint16_t sn_2bytes = 0;
+    err_t error_flag;
+
+    *serial_number = 0;
+
+    for ( uint8_t i = 0; i < 3; i++ )
+    {
+        error_flag = temphum24_write_then_read_single( ctx, TEMPHUM24_CMD_READ_NIST_ID_BYTES_5_4+i, 
+                                                       &sn_2bytes );
+        if ( error_flag < 0 )
+        {
+            return error_flag;
+        }
+
+        *serial_number <<= 16;
+        *serial_number |= sn_2bytes;
+    }
+
+    return TEMPHUM24_OK;
+}
+
 static uint8_t temphum24_calculate_crc ( uint8_t *crc_source )
 {
     uint8_t crc = TEMPHUM24_INIT_VALUE;
