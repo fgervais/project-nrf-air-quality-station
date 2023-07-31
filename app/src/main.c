@@ -47,6 +47,28 @@ static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 	return 0;
 }
 
+static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
+					char *sn_buf, size_t sn_buf_size)
+{
+	int ret;
+	uint64_t serial_number;
+
+	ret = temphum24_get_serial_number(temphum_ctx, &serial_number);
+	if (ret < 0) {
+		LOG_ERR("Could not read hdc302x serial number");
+		return ret;
+	}
+
+	ret = snprintf(sn_buf, sn_buf_size, "%012llx", serial_number);
+	if (ret < 0 && ret >= sn_buf_size) {
+		LOG_ERR("Could not set sn_buf");
+		return -ENOMEM;
+	}
+
+	LOG_INF("HDC302x serial number: %s", sn_buf);
+	return 0;
+}
+
 
 static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
 			      const char *part_number,
@@ -69,17 +91,21 @@ static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
 
 int main(void)
 {
+	int ret;
+
 	hvac_t hvac;
 	hvac_cfg_t hvac_cfg;
 
 	temphum24_t temphum24;
 	temphum24_cfg_t temphum24_cfg;
 
-	int ret;
 	char scd4x_serial_string[128];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
+	char hdc302x_serial_string[128];
+
 	char scd4x_co2_unique_id_string[128];
 	char sps30_pm25_unique_id_string[128];
+	char hdc302x_temp_unique_id_string[128];
 
 	struct ha_sensor co2_sensor = {
 		.name = "CO₂",
@@ -135,6 +161,14 @@ int main(void)
 		return ret;
 	}
 
+	ret = get_hdc302x_serial_as_string(&temphum24,
+					   hdc302x_serial_string,
+					   sizeof(hdc302x_serial_string));
+	if (ret < 0) {
+		LOG_ERR("Could not get hdc302x serial number");
+		return ret;
+	}
+
 	ret = generate_unique_id(scd4x_co2_unique_id_string,
 				 sizeof(scd4x_co2_unique_id_string),
 				 "scd4x", "co2",
@@ -150,6 +184,15 @@ int main(void)
 				 sps30_serial_string);
 	if (ret < 0) {
 		LOG_ERR("Could not generate sps30 unique id");
+		return ret;
+	}
+
+	ret = generate_unique_id(hdc302x_temp_unique_id_string,
+				 sizeof(hdc302x_temp_unique_id_string),
+				 "hdc302x", "temp",
+				 hdc302x_serial_string);
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
 
