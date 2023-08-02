@@ -126,12 +126,6 @@ int main(void)
 
 	openthread_enable_ready_flag();
 
-	while (!openthread_is_ready())
-		k_sleep(K_MSEC(100));
-
-	// Something else is not ready, not sure what
-	k_sleep(K_MSEC(100));
-
 	hvac_cfg_setup(&hvac_cfg);
 	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	ret = hvac_init(&hvac, &hvac_cfg);
@@ -203,6 +197,12 @@ int main(void)
 		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
+
+	while (!openthread_is_ready())
+		k_sleep(K_MSEC(100));
+
+	// Something else is not ready, not sure what
+	k_sleep(K_MSEC(100));
 
 	return 0;
 
