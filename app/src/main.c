@@ -42,6 +42,10 @@ static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 	int ret;
 
 	ret = hvac_sps30_get_serial_number(hvac_ctx, sn_buf, sn_buf_size);
+	if (ret < 0) {
+		LOG_ERR("hvac: could not read sps30 serial number");
+		return ret;
+	}
 
 	LOG_INF("SPS30 serial number: %s", sn_buf);
 	return 0;
