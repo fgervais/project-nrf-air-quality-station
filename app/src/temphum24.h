@@ -479,13 +479,13 @@ err_t temphum24_stop_measurement ( temphum24_t *ctx );
  * @details This function reads the serial number/NIST ID.
  * @param[in] ctx : Click context object.
  * See #temphum24_t object definition for detailed explanation.
- * @param[out] serial_number : 48-bit serial number.
+ * @param[out] serial_number : Pointer to the memory location where serial number value be stored.
  * @return @li @c  0 - Success,
  *         @li @c -1 - Error.
  * See #err_t definition for detailed explanation.
  * @note None.
  */
-err_t temphum24_get_serial_number ( temphum24_t *ctx, uint64_t *serial_number );
+err_t temphum24_get_serial_number ( temphum24_t *ctx, uint16_t *serial_number );
 
 #ifdef __cplusplus
 }

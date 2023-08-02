@@ -55,15 +55,19 @@ static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
 					char *sn_buf, size_t sn_buf_size)
 {
 	int ret;
-	uint64_t serial_number;
+	uint16_t serial_number_words[3];
 
-	ret = temphum24_get_serial_number(temphum_ctx, &serial_number);
+	ret = temphum24_get_serial_number(temphum_ctx, serial_number_words);
 	if (ret < 0) {
 		LOG_ERR("temphum24: could not read hdc302x serial number");
 		return ret;
 	}
 
-	ret = snprintf(sn_buf, sn_buf_size, "%012llx", serial_number);
+	ret = snprintf(sn_buf, sn_buf_size,
+		       "%04x%04x%04x",
+		       serial_number_words[0],
+		       serial_number_words[1],
+		       serial_number_words[2]);
 	if (ret < 0 && ret >= sn_buf_size) {
 		LOG_ERR("Could not set sn_buf");
 		return -ENOMEM;
