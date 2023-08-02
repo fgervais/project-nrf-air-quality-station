@@ -59,7 +59,7 @@ static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
 
 	ret = temphum24_get_serial_number(temphum_ctx, &serial_number);
 	if (ret < 0) {
-		LOG_ERR("Could not read hdc302x serial number");
+		LOG_ERR("temphum24: could not read hdc302x serial number");
 		return ret;
 	}
 
@@ -153,7 +153,7 @@ int main(void)
 	ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
 					 sizeof(scd4x_serial_string));
 	if (ret < 0) {
-		LOG_ERR("Could not get scd4x serial number");
+		LOG_ERR("Could not get scd4x serial number string");
 		return ret;
 	}
 
@@ -161,7 +161,7 @@ int main(void)
 					 sps30_serial_string,
 					 sizeof(sps30_serial_string));
 	if (ret < 0) {
-		LOG_ERR("Could not get sps30 serial number");
+		LOG_ERR("Could not get sps30 serial number string");
 		return ret;
 	}
 
@@ -169,7 +169,7 @@ int main(void)
 					   hdc302x_serial_string,
 					   sizeof(hdc302x_serial_string));
 	if (ret < 0) {
-		LOG_ERR("Could not get hdc302x serial number");
+		LOG_ERR("Could not get hdc302x serial number string");
 		return ret;
 	}
 
