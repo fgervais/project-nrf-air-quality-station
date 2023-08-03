@@ -199,7 +199,7 @@ int main(void)
 	return 0;
 
 	ha_start();
-	ha_register_sensor(&temp_sensor);
+	ha_register_sensor(&temperature_sensor);
 
 	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	hvac_sps30_start_measurement (&hvac);
