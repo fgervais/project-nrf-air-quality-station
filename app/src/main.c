@@ -244,6 +244,12 @@ int main(void)
 		LOG_INF("├── Temperature: %.2f°C", temperature);
 		LOG_INF("└── Humidity: %.1f%%", humidity);
 
+		ret = ha_send_value(&temperature_sensor, temperature);
+		if (ret < 0) {
+			LOG_ERR("Could not send temperture");
+			return ret;
+		}
+
 		// hvac_scd40_read_measurement(&hvac, &hvac_data);
 
 		// LOG_INF("SCD4x");
