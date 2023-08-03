@@ -306,6 +306,28 @@ int ha_start()
 	return 0;
 }
 
+// `object_id` is set to `unique id` in order to maintain full `name` flexibility
+// as by default, the `entity_id` is generated from the `name` if defined and
+// `entity_id` has strict character requirements.
+//
+// Setting the `object_id` allows HA to use it instead of the name to
+// generate the `entity_id` thus allowing name to use characters unallowed
+// in an `entity_id`.
+//
+// https://github.com/home-assistant/core/issues/4628#:~:text=Description%20of%20problem%3A%20In%20case%20device%20has%20no%20English%20characters%20in%20the%20name%20HA%20will%20generate%20an%20empty%20entity_id%20and%20it%20will%20not%20be%20possible%20to%20access%20the%20device%20from%20HA.
+// 
+// object_id: Used instead of name for automatic generation of entity_id
+//   https://www.home-assistant.io/integrations/sensor.mqtt/#object_id
+//
+// Best practice for entities with a unique_id is to set <object_id> to unique_id
+//   https://www.home-assistant.io/integrations/mqtt/#discovery-messages
+//
+// MQTT sensor example:
+// https://community.home-assistant.io/t/unique-id-with-mqtt-sensor-not-working/564315/8
+//
+// Other usefull links:
+// https://community.home-assistant.io/t/unique-id-and-object-id-are-being-ignored-in-my-mqtt-sensor/397368/14
+// https://community.home-assistant.io/t/wth-are-there-unique-id-and-entity-id/467623/9
 int ha_register_sensor(struct ha_sensor *sensor)
 {
 	int ret;
@@ -314,6 +336,7 @@ int ha_register_sensor(struct ha_sensor *sensor)
 		.base_path = mqtt_base_path,
 		.name = sensor->name,
 		.unique_id = sensor->unique_id,
+		.object_id = sensor->unique_id,
 		.device_class = sensor->device_class,
 		.state_class = sensor->state_class,
 		.availability_topic = "~/available",
@@ -322,30 +345,6 @@ int ha_register_sensor(struct ha_sensor *sensor)
 	};
 
 	LOG_INF("📝 registering sensor: %s", sensor->unique_id);
-
-	// This is done in order to maintain full `name` flexibility as by default,
-	// the `entity_id` is generated from the `name` if defined and `entity_id`
-	// has strict character requirements.
-	//
-	// Setting the `object_id` allows HA to use it instead of the name to
-	// generate the `entity_id` thus allowing name to use characters unallowed
-	// in an `entity_id`.
-	//
-	// https://github.com/home-assistant/core/issues/4628#:~:text=Description%20of%20problem%3A%20In%20case%20device%20has%20no%20English%20characters%20in%20the%20name%20HA%20will%20generate%20an%20empty%20entity_id%20and%20it%20will%20not%20be%20possible%20to%20access%20the%20device%20from%20HA.
-	// 
-	// object_id: Used instead of name for automatic generation of entity_id
-	//   https://www.home-assistant.io/integrations/sensor.mqtt/#object_id
-	//
-	// Best practice for entities with a unique_id is to set <object_id> to unique_id
-	//   https://www.home-assistant.io/integrations/mqtt/#discovery-messages
-	//
-	// MQTT sensor example:
-	// https://community.home-assistant.io/t/unique-id-with-mqtt-sensor-not-working/564315/8
-	//
-	// Other usefull links:
-	// https://community.home-assistant.io/t/unique-id-and-object-id-are-being-ignored-in-my-mqtt-sensor/397368/14
-	// https://community.home-assistant.io/t/wth-are-there-unique-id-and-entity-id/467623/9
-	sensor->object_id = sensor->unique_id;
 
 	ret = snprintf(sensor->brief_state_topic, sizeof(sensor->brief_state_topic),
 		       "~/sensor/%s/state", sensor->unique_id);

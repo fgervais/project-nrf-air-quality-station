@@ -8,9 +8,6 @@ struct ha_sensor {
 	const char *device_class;
 	const char *state_class;
 
-	// Set internally
-	const char *object_id;
-
 	// Internal use
 	char brief_state_topic[128];
 	char full_state_topic[128];
