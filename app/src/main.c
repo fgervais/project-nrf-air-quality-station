@@ -201,22 +201,22 @@ int main(void)
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
 
-	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
-	hvac_sps30_start_measurement (&hvac);
 	ret = temphum24_default_cfg(&temphum24);
 	if (ret < 0) {
 		LOG_ERR("Could not start hdc302x");
 		return ret;
 	}
+	// hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
+	// hvac_sps30_start_measurement (&hvac);
 
 	k_sleep(K_SECONDS(10));
 
 	LOG_INF("🎉 Init done 🎉");
 
+	float temperature, humidity;
+
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
-
-	float temperature, humidity;
 
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
