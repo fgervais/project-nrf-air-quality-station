@@ -115,12 +115,19 @@ int main(void)
 	char scd4x_co2_unique_id_string[128];
 	char sps30_pm25_unique_id_string[128];
 
-	struct ha_sensor co2_sensor = {
-		.name = "CO₂",
-		.unique_id = scd4x_co2_unique_id_string,
-		.device_class = "carbon_dioxide",
+	struct ha_sensor temperature_sensor = {
+		.name = "Temperature",
+		.unique_id = hdc302x_temp_unique_id_string,
+		.device_class = "temperature",
 		.state_class = "measurement",
 	};
+
+	// struct ha_sensor co2_sensor = {
+	// 	.name = "CO₂",
+	// 	.unique_id = scd4x_co2_unique_id_string,
+	// 	.device_class = "carbon_dioxide",
+	// 	.state_class = "measurement",
+	// };
 
 	LOG_INF("\n\n🐨 MAIN START 🐨\n");
 
