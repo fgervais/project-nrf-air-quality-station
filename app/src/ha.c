@@ -305,6 +305,8 @@ int ha_start()
 	return 0;
 }
 
+// `object_id` = `unique id`
+//
 // `object_id` is set to `unique id` in order to maintain full `name` flexibility
 // as by default, the `entity_id` is generated from the `name` if defined and
 // `entity_id` has strict character requirements.
