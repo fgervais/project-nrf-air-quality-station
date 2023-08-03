@@ -1,6 +1,8 @@
 #ifndef HA_H_
 #define HA_H_
 
+#define HA_TOPIC_BUFFER_SIZE		128
+
 struct ha_sensor {
 	// Set by user
 	const char *name;
@@ -9,7 +11,7 @@ struct ha_sensor {
 	const char *state_class;
 
 	// Internal use
-	char full_state_topic[128];
+	char full_state_topic[HA_TOPIC_BUFFER_SIZE];
 };
 
 int ha_start();

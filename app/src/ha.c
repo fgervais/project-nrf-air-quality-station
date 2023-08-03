@@ -13,7 +13,6 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 
 
 #define DEVICE_ID_BYTE_SIZE		8
-#define TOPIC_BUFFER_SIZE		128
 #define JSON_CONFIG_BUFFER_SIZE		1024
 #define UNIQUE_ID_BUFFER_SIZE		64
 
@@ -54,14 +53,14 @@ struct ha_sensor_config {
 
 
 static char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
-static char mqtt_base_path[TOPIC_BUFFER_SIZE];
+static char mqtt_base_path[HA_TOPIC_BUFFER_SIZE];
 // static char *scd4x_sn;
 // static char *sps30_sn;
 
 // static char unique_id_co2[UNIQUE_ID_BUFFER_SIZE];
 // static char unique_id_pm25[UNIQUE_ID_BUFFER_SIZE];
 
-static char last_will_topic[TOPIC_BUFFER_SIZE];
+static char last_will_topic[HA_TOPIC_BUFFER_SIZE];
 static const char *last_will_message = "offline";
 
 
@@ -185,7 +184,7 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 {
 	int ret;
 	char json_config[JSON_CONFIG_BUFFER_SIZE];
-	char discovery_topic[TOPIC_BUFFER_SIZE];
+	char discovery_topic[HA_TOPIC_BUFFER_SIZE];
 
 	snprintf(discovery_topic, sizeof(discovery_topic),
 		 DISCOVERY_TOPIC_FORMAT_STRING, conf->unique_id);
@@ -331,7 +330,7 @@ int ha_start()
 int ha_register_sensor(struct ha_sensor *sensor)
 {
 	int ret;
-	char brief_state_topic[TOPIC_BUFFER_SIZE];
+	char brief_state_topic[HA_TOPIC_BUFFER_SIZE];
 	struct ha_sensor_config ha_sensor_config = {
 		.base_path = mqtt_base_path,
 		.name = sensor->name,
