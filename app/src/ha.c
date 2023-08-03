@@ -331,7 +331,7 @@ int ha_start()
 int ha_register_sensor(struct ha_sensor *sensor)
 {
 	int ret;
-	char state_topic[TOPIC_BUFFER_SIZE];
+	char brief_state_topic[TOPIC_BUFFER_SIZE];
 	struct ha_sensor_config ha_sensor_config = {
 		.base_path = mqtt_base_path,
 		.name = sensor->name,
@@ -340,15 +340,15 @@ int ha_register_sensor(struct ha_sensor *sensor)
 		.device_class = sensor->device_class,
 		.state_class = sensor->state_class,
 		.availability_topic = "~/available",
-		.state_topic = state_topic,
+		.state_topic = brief_state_topic,
 		.dev = AIR_QUALITY_DEVICE,
 	};
 
 	LOG_INF("📝 registering sensor: %s", sensor->unique_id);
 
-	ret = snprintf(sensor->brief_state_topic, sizeof(sensor->brief_state_topic),
+	ret = snprintf(brief_state_topic, sizeof(brief_state_topic),
 		       "~/sensor/%s/state", sensor->unique_id);
-	if (ret < 0 && ret >= sizeof(sensor->brief_state_topic)) {
+	if (ret < 0 && ret >= sizeof(brief_state_topic)) {
 		LOG_ERR("Could not set brief_state_topic");
 		return -ENOMEM;
 	}
@@ -356,8 +356,8 @@ int ha_register_sensor(struct ha_sensor *sensor)
 	ret = snprintf(sensor->full_state_topic, sizeof(sensor->full_state_topic),
 		 "%s%s",
 		 mqtt_base_path,
-		 sensor->brief_state_topic + 1);
-	if (ret < 0 && ret >= sizeof(sensor->brief_state_topic)) {
+		 brief_state_topic + 1);
+	if (ret < 0 && ret >= sizeof(brief_state_topic)) {
 		LOG_ERR("Could not set full_state_topic");
 		return -ENOMEM;
 	}

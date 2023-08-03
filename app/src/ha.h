@@ -9,7 +9,6 @@ struct ha_sensor {
 	const char *state_class;
 
 	// Internal use
-	char brief_state_topic[128];
 	char full_state_topic[128];
 };
 
