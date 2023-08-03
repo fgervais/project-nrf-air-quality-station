@@ -163,23 +163,20 @@ int main(void)
 		return ret;
 	}
 
-	ret = generate_unique_id(scd4x_co2_unique_id_string,
-				 sizeof(scd4x_co2_unique_id_string),
-				 "scd4x", "co2",
-				 scd4x_serial_string);
-	if (ret < 0) {
-		LOG_ERR("Could not generate scd4x unique id");
-		return ret;
-	}
+	// ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
+	// 				 sizeof(scd4x_serial_string));
+	// if (ret < 0) {
+	// 	LOG_ERR("Could not get scd4x serial number string");
+	// 	return ret;
+	// }
 
-	ret = generate_unique_id(sps30_pm25_unique_id_string,
-				 sizeof(sps30_pm25_unique_id_string),
-				 "sps30", "pm25",
-				 sps30_serial_string);
-	if (ret < 0) {
-		LOG_ERR("Could not generate sps30 unique id");
-		return ret;
-	}
+	// ret = get_sps30_serial_as_string(&hvac,
+	// 				 sps30_serial_string,
+	// 				 sizeof(sps30_serial_string));
+	// if (ret < 0) {
+	// 	LOG_ERR("Could not get sps30 serial number string");
+	// 	return ret;
+	// }
 
 	ret = generate_unique_id(hdc302x_temp_unique_id_string,
 				 sizeof(hdc302x_temp_unique_id_string),
@@ -189,6 +186,24 @@ int main(void)
 		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
+
+	// ret = generate_unique_id(scd4x_co2_unique_id_string,
+	// 			 sizeof(scd4x_co2_unique_id_string),
+	// 			 "scd4x", "co2",
+	// 			 scd4x_serial_string);
+	// if (ret < 0) {
+	// 	LOG_ERR("Could not generate scd4x unique id");
+	// 	return ret;
+	// }
+
+	// ret = generate_unique_id(sps30_pm25_unique_id_string,
+	// 			 sizeof(sps30_pm25_unique_id_string),
+	// 			 "sps30", "pm25",
+	// 			 sps30_serial_string);
+	// if (ret < 0) {
+	// 	LOG_ERR("Could not generate sps30 unique id");
+	// 	return ret;
+	// }
 
 	while (!openthread_is_ready())
 		k_sleep(K_MSEC(100));
