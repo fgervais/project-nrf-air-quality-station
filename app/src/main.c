@@ -101,19 +101,19 @@ int main(void)
 {
 	int ret;
 
-	hvac_t hvac;
-	hvac_cfg_t hvac_cfg;
-
 	temphum24_t temphum24;
 	temphum24_cfg_t temphum24_cfg;
 
+	hvac_t hvac;
+	hvac_cfg_t hvac_cfg;
+
+	char hdc302x_serial_string[128];
 	char scd4x_serial_string[128];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
-	char hdc302x_serial_string[128];
 
+	char hdc302x_temp_unique_id_string[128];
 	char scd4x_co2_unique_id_string[128];
 	char sps30_pm25_unique_id_string[128];
-	char hdc302x_temp_unique_id_string[128];
 
 	struct ha_sensor co2_sensor = {
 		.name = "CO₂",
@@ -125,14 +125,6 @@ int main(void)
 	LOG_INF("\n\n🐨 MAIN START 🐨\n");
 
 	openthread_enable_ready_flag();
-
-	hvac_cfg_setup(&hvac_cfg);
-	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-	ret = hvac_init(&hvac, &hvac_cfg);
-	if (ret < 0) {
-		LOG_ERR("Could not initialize hvac");
-		return ret;
-	}
 
 	temphum24_cfg_setup(&temphum24_cfg);
 	temphum24.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
@@ -146,22 +138,15 @@ int main(void)
 		return ret;
 	}
 
+	hvac_cfg_setup(&hvac_cfg);
+	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+	ret = hvac_init(&hvac, &hvac_cfg);
+	if (ret < 0) {
+		LOG_ERR("Could not initialize hvac");
+		return ret;
+	}
+
 	LOG_INF("Version: %s", APP_VERSION_FULL);
-
-	ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
-					 sizeof(scd4x_serial_string));
-	if (ret < 0) {
-		LOG_ERR("Could not get scd4x serial number string");
-		return ret;
-	}
-
-	ret = get_sps30_serial_as_string(&hvac,
-					 sps30_serial_string,
-					 sizeof(sps30_serial_string));
-	if (ret < 0) {
-		LOG_ERR("Could not get sps30 serial number string");
-		return ret;
-	}
 
 	ret = get_hdc302x_serial_as_string(&temphum24,
 					   hdc302x_serial_string,
@@ -207,7 +192,7 @@ int main(void)
 	return 0;
 
 	ha_start();
-	ha_register_sensor(&co2_sensor);
+	ha_register_sensor(&temp_sensor);
 
 	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	hvac_sps30_start_measurement (&hvac);
