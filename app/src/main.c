@@ -214,8 +214,6 @@ int main(void)
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
 
-	return 0;
-
 	ret = temphum24_default_cfg(&temphum24);
 	if (ret < 0) {
 		LOG_ERR("Could not start hdc302x");
@@ -224,9 +222,10 @@ int main(void)
 	// hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	// hvac_sps30_start_measurement (&hvac);
 
+	LOG_INF("💤 waiting for all sensors to be ready");
 	k_sleep(K_SECONDS(10));
 
-	LOG_INF("🎉 Init done 🎉");
+	LOG_INF("🎉 init done 🎉");
 
 	float temperature, humidity;
 
@@ -242,8 +241,8 @@ int main(void)
 		}
 
 		LOG_INF("HDC302x");
-		LOG_INF("├── Temperature: %.2f °C", temperature);
-		LOG_INF("└── Humidity: %.1f %%RH", humidity);
+		LOG_INF("├── Temperature: %.2f°C", temperature);
+		LOG_INF("└── Humidity: %.1f%%", humidity);
 
 		// hvac_scd40_read_measurement(&hvac, &hvac_data);
 
@@ -268,7 +267,7 @@ int main(void)
 		// LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
 		// LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
 
-		LOG_INF("💤 End of main loop 💤");
+		LOG_INF("💤 end of main loop");
 		k_sleep(K_SECONDS(60));
 	}
 
