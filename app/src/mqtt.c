@@ -290,7 +290,7 @@ static int try_to_connect(struct mqtt_client *client)
 	uint8_t retries = 3U;
 	int rc;
 
-	LOG_DBG("attempting to connect...");
+	LOG_INF("attempting to connect");
 
 	while (retries--) {
 		client_init(client);
@@ -331,6 +331,8 @@ static int get_mqtt_broker_addrinfo(void)
 {
 	int retries = 3;
 	int rc = -EINVAL;
+
+	LOG_INF("resolving server address");
 
 	while (retries--) {
 		hints.ai_family = AF_INET6;
@@ -373,6 +375,8 @@ static int get_mqtt_broker_addrinfo(void)
 static int connect_to_server(void)
 {
 	int rc = -EINVAL;
+
+	LOG_INF("🔌 connect to server");
 
 #if defined(CONFIG_DNS_RESOLVER)
 	rc = get_mqtt_broker_addrinfo();
