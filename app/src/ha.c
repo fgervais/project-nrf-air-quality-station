@@ -193,7 +193,7 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 	LOG_DBG("discovery topic: %s", discovery_topic);
 
 	ret = json_obj_encode_buf(config_descr, ARRAY_SIZE(config_descr),
-				  &conf, json_config, sizeof(json_config));
+				  conf, json_config, sizeof(json_config));
 	if (ret < 0) {
 		LOG_ERR("Could not encode JSON (%d)", ret);
 		return ret;
