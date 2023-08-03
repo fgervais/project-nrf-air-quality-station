@@ -211,10 +211,10 @@ int main(void)
 	// Something else is not ready, not sure what
 	k_sleep(K_MSEC(100));
 
-	return 0;
-
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
+
+	return 0;
 
 	ret = temphum24_default_cfg(&temphum24);
 	if (ret < 0) {
