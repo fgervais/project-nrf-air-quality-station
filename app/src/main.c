@@ -219,29 +219,6 @@ int main(void)
 	float temperature, humidity;
 
 	while (1) {
-		hvac_scd40_read_measurement(&hvac, &hvac_data);
-
-		LOG_INF("SCD4x");
-		LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
-		LOG_INF("├── Temperature = %.2f °C", hvac_data.temperature);
-		LOG_INF("└── R. Humidity = %.2f %%", hvac_data.r_humidity);
-
-		hvac_sps30_read_measured_data(&hvac, &sps30_data);
-
-		LOG_INF("SPS30");
-		LOG_INF("├── Mass concentration");
-		LOG_INF("│   ├── PM 1.0 = %.2f μg/m³", sps30_data.mass_pm_1_0);
-		LOG_INF("│   ├── PM 2.5 = %.2f μg/m³", sps30_data.mass_pm_2_5);
-		LOG_INF("│   ├── PM 4.0 = %.2f μg/m³", sps30_data.mass_pm_4_0);
-		LOG_INF("│   └── PM 10  = %.2f μg/m³", sps30_data.mass_pm_10);
-
-		LOG_INF("└── Number Concentration");
-		LOG_INF("    ├── PM 0.5 = %.2f n/cm³", sps30_data.num_pm_0_5);
-		LOG_INF("    ├── PM 1.0 = %.2f n/cm³", sps30_data.num_pm_1_0);
-		LOG_INF("    ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
-		LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
-		LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
-
 		ret = temphum24_read_temp_and_rh(&temphum24,
 						 &temperature, &humidity);
 		if (ret < 0) {
@@ -252,6 +229,29 @@ int main(void)
 		LOG_INF("HDC302x");
 		LOG_INF("├── Temperature: %.2f °C", temperature);
 		LOG_INF("└── Humidity: %.1f %%RH", humidity);
+
+		// hvac_scd40_read_measurement(&hvac, &hvac_data);
+
+		// LOG_INF("SCD4x");
+		// LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
+		// LOG_INF("├── Temperature = %.2f °C", hvac_data.temperature);
+		// LOG_INF("└── R. Humidity = %.2f %%", hvac_data.r_humidity);
+
+		// hvac_sps30_read_measured_data(&hvac, &sps30_data);
+
+		// LOG_INF("SPS30");
+		// LOG_INF("├── Mass concentration");
+		// LOG_INF("│   ├── PM 1.0 = %.2f μg/m³", sps30_data.mass_pm_1_0);
+		// LOG_INF("│   ├── PM 2.5 = %.2f μg/m³", sps30_data.mass_pm_2_5);
+		// LOG_INF("│   ├── PM 4.0 = %.2f μg/m³", sps30_data.mass_pm_4_0);
+		// LOG_INF("│   └── PM 10  = %.2f μg/m³", sps30_data.mass_pm_10);
+
+		// LOG_INF("└── Number Concentration");
+		// LOG_INF("    ├── PM 0.5 = %.2f n/cm³", sps30_data.num_pm_0_5);
+		// LOG_INF("    ├── PM 1.0 = %.2f n/cm³", sps30_data.num_pm_1_0);
+		// LOG_INF("    ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
+		// LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
+		// LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
 
 		LOG_INF("💤 End of main loop 💤");
 		k_sleep(K_SECONDS(60));
