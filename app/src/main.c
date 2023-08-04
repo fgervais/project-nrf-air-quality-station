@@ -227,6 +227,10 @@ int main(void)
 	LOG_INF("💤 waiting for all sensors to be ready");
 	k_sleep(K_SECONDS(10));
 
+	// We set the device online after 10 seconds so HA gets time to
+	// process the sensor registrations first.
+	ha_set_online();
+
 	LOG_INF("🎉 init done 🎉");
 
 	float temperature, humidity;
