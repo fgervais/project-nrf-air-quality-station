@@ -9,6 +9,8 @@ struct ha_sensor {
 	const char *unique_id;
 	const char *device_class;
 	const char *state_class;
+	const char *unit_of_measurement;
+	int suggested_display_precision;
 
 	// Internal use
 	char full_state_topic[HA_TOPIC_BUFFER_SIZE];

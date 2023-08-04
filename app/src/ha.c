@@ -46,6 +46,8 @@ struct ha_sensor_config {
 	const char *object_id;
 	const char *device_class;
 	const char *state_class;
+	const char *unit_of_measurement;
+	int suggested_display_precision;
 	const char *availability_topic;
 	const char *state_topic;
 	struct ha_device dev;
@@ -117,6 +119,8 @@ static const struct json_obj_descr config_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, object_id,			JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, device_class,		JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_class,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, unit_of_measurement,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, suggested_display_precision, JSON_TOK_NUMBER),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, availability_topic,	JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_topic,		JSON_TOK_STRING),
 	JSON_OBJ_DESCR_OBJECT(struct ha_sensor_config, dev, device_descr),
@@ -340,6 +344,8 @@ int ha_register_sensor(struct ha_sensor *sensor)
 		.object_id = sensor->unique_id,
 		.device_class = sensor->device_class,
 		.state_class = sensor->state_class,
+		.unit_of_measurement = sensor->unit_of_measurement,
+		.suggested_display_precision = sensor->suggested_display_precision,
 		.availability_topic = "~/available",
 		.state_topic = brief_state_topic,
 		.dev = AIR_QUALITY_DEVICE,

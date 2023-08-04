@@ -120,6 +120,8 @@ int main(void)
 		.unique_id = hdc302x_temp_unique_id_string,
 		.device_class = "temperature",
 		.state_class = "measurement",
+		.unit_of_measurement = "°C",
+		.suggested_display_precision = 1,
 	};
 
 	// struct ha_sensor co2_sensor = {
