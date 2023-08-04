@@ -302,6 +302,8 @@ int ha_start()
 		return ret;
 	}
 
+	mqtt_publish_to_topic(last_will_topic, "online", false);
+
 	// ha_send_discovery();
 	// LOG_INF("✏️  subscribe to topics");
 	// ha_subscribe_to_topics();
