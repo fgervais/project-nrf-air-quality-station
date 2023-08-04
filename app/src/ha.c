@@ -204,7 +204,11 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 
 	LOG_DBG("payload: %s", json_config);
 
-	mqtt_publish_to_topic(discovery_topic, json_config, true);
+	ret = mqtt_publish_to_topic(discovery_topic, json_config, true);
+	if (ret < 0) {
+		LOG_ERR("Count not publish to topic");
+		return ret;
+	}
 
 	return 0;
 }
@@ -302,7 +306,11 @@ int ha_start()
 		return ret;
 	}
 
-	mqtt_publish_to_topic(last_will_topic, "online", false);
+	ret = mqtt_publish_to_topic(last_will_topic, "online", false);
+	if (ret < 0) {
+		LOG_ERR("Count not publish to topic");
+		return ret;
+	}
 
 	// ha_send_discovery();
 	// LOG_INF("✏️  subscribe to topics");
@@ -394,7 +402,11 @@ int ha_send_value(struct ha_sensor *sensor, double value)
 		return -ENOMEM;
 	}
 
-	mqtt_publish_to_topic(sensor->full_state_topic, value_string, false);
+	ret = mqtt_publish_to_topic(sensor->full_state_topic, value_string, false);
+	if (ret < 0) {
+		LOG_ERR("Count not publish to topic");
+		return ret;
+	}
 
 	return 0;
 }
