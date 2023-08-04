@@ -121,7 +121,7 @@ int main(void)
 		.device_class = "temperature",
 		.state_class = "measurement",
 		.unit_of_measurement = "°C",
-		.suggested_display_precision = 1,
+		.suggested_display_precision = 2,
 	};
 
 	// struct ha_sensor co2_sensor = {
