@@ -216,12 +216,15 @@ int main(void)
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
 
+	// 1 measurement per second
 	ret = temphum24_default_cfg(&temphum24);
 	if (ret < 0) {
 		LOG_ERR("Could not start hdc302x");
 		return ret;
 	}
+	// 1 measurement every 5 seconds
 	// hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
+	// New readings are available every second
 	// hvac_sps30_start_measurement (&hvac);
 
 	LOG_INF("💤 waiting for all sensors to be ready");
