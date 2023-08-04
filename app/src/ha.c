@@ -326,6 +326,22 @@ int ha_set_online()
 	return 0;
 }
 
+int ha_init_sensor(struct ha_sensor *sensor)
+{
+	sensor->total_value = 0;
+	sensor->number_of_values = 0;
+
+	return 0;
+}
+
+int ha_add_sensor_reading(struct ha_sensor *sensor, double value)
+{
+	sensor->total_value += value;
+	sensor->number_of_values += 1;
+
+	return 0;
+}
+
 // `object_id` = `unique id`
 //
 // `object_id` is set to `unique id` in order to maintain full `name` flexibility
@@ -396,14 +412,14 @@ int ha_register_sensor(struct ha_sensor *sensor)
 	return 0;
 }
 
-int ha_send_value(struct ha_sensor *sensor, double value)
+int ha_send_sensor_value(struct ha_sensor *sensor)
 {
 	int ret;
 	char value_string[16];
 
 	ret = snprintf(value_string, sizeof(value_string),
 		       "%g",
-		       value);
+		       sensor->total_value / sensor->number_of_values);
 	if (ret < 0 && ret >= sizeof(value_string)) {
 		LOG_ERR("Could not set value_string");
 		return -ENOMEM;
@@ -414,6 +430,9 @@ int ha_send_value(struct ha_sensor *sensor, double value)
 		LOG_ERR("Count not publish to topic");
 		return ret;
 	}
+
+	sensor->total_value = 0;
+	sensor->number_of_values = 0;
 
 	return 0;
 }

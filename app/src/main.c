@@ -14,6 +14,10 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "openthread.h"
 
 
+#define SEDONDS_IN_BETWEEN_SENSOR_READING	10
+#define NUMBER_OF_READINGS_IN_AVERAGE		6
+
+
 static int get_scd4x_serial_as_string(hvac_t *hvac_ctx,
 				      char *sn_buf, size_t sn_buf_size)
 {
@@ -228,7 +232,7 @@ int main(void)
 	// hvac_sps30_start_measurement (&hvac);
 
 	LOG_INF("💤 waiting for all sensors to be ready");
-	k_sleep(K_SECONDS(10));
+	k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));
 
 	// We set the device online after 10 seconds so HA gets time to
 	// process the sensor registrations first.
@@ -240,6 +244,8 @@ int main(void)
 
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
+
+	int number_of_readings = 0;
 
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
@@ -253,11 +259,7 @@ int main(void)
 		LOG_INF("├── Temperature: %.2f°C", temperature);
 		LOG_INF("└── Humidity: %.1f%%", humidity);
 
-		ret = ha_send_value(&temperature_sensor, temperature);
-		if (ret < 0) {
-			LOG_ERR("Could not send temperture");
-			return ret;
-		}
+		ha_add_sensor_reading(&temperature_sensor, temperature);
 
 		// hvac_scd40_read_measurement(&hvac, &hvac_data);
 
@@ -282,8 +284,17 @@ int main(void)
 		// LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
 		// LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
 
+		number_of_readings += 1;
+		if (number_of_readings >= NUMBER_OF_READINGS_IN_AVERAGE) {
+			ret = ha_send_sensor_value(&temperature_sensor);
+			if (ret < 0) {
+				LOG_WRN("Could not send temperture, continuing");
+			}
+			number_of_readings = 0;
+		}
+
 		LOG_INF("💤 end of main loop");
-		k_sleep(K_SECONDS(60));
+		k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));
 	}
 
 	return 0;
