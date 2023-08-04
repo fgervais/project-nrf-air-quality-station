@@ -116,6 +116,7 @@ int main(void)
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
 
 	char hdc302x_temp_unique_id_string[128];
+	char hdc302x_hum_unique_id_string[128];
 	char scd4x_co2_unique_id_string[128];
 	char sps30_pm25_unique_id_string[128];
 
@@ -126,6 +127,15 @@ int main(void)
 		.state_class = "measurement",
 		.unit_of_measurement = "°C",
 		.suggested_display_precision = 2,
+	};
+
+	struct ha_sensor humidity_sensor = {
+		.name = "Humidity",
+		.unique_id = hdc302x_hum_unique_id_string,
+		.device_class = "humidity",
+		.state_class = "measurement",
+		.unit_of_measurement = "%",
+		.suggested_display_precision = 1,
 	};
 
 	// struct ha_sensor co2_sensor = {
@@ -193,6 +203,15 @@ int main(void)
 		return ret;
 	}
 
+	ret = generate_unique_id(hdc302x_hum_unique_id_string,
+				 sizeof(hdc302x_hum_unique_id_string),
+				 "hdc302x", "hum",
+				 hdc302x_serial_string);
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x humidity unique id");
+		return ret;
+	}
+
 	// ret = generate_unique_id(scd4x_co2_unique_id_string,
 	// 			 sizeof(scd4x_co2_unique_id_string),
 	// 			 "scd4x", "co2",
@@ -219,6 +238,7 @@ int main(void)
 
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
+	ha_register_sensor(&humidity_sensor);
 
 	// 1 measurement per second
 	ret = temphum24_default_cfg(&temphum24);
@@ -260,6 +280,7 @@ int main(void)
 		LOG_INF("└── Humidity: %.1f%%", humidity);
 
 		ha_add_sensor_reading(&temperature_sensor, temperature);
+		ha_add_sensor_reading(&humidity_sensor, humidity);
 
 		// hvac_scd40_read_measurement(&hvac, &hvac_data);
 
@@ -288,7 +309,13 @@ int main(void)
 		if (number_of_readings >= NUMBER_OF_READINGS_IN_AVERAGE) {
 			ret = ha_send_sensor_value(&temperature_sensor);
 			if (ret < 0) {
-				LOG_WRN("Could not send temperture, continuing");
+				LOG_WRN("Could not send temperature, continuing");
+			}
+			number_of_readings = 0;
+
+			ret = ha_send_sensor_value(&humidity_sensor);
+			if (ret < 0) {
+				LOG_WRN("Could not send humidity, continuing");
 			}
 			number_of_readings = 0;
 		}
