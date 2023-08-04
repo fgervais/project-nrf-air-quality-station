@@ -114,6 +114,16 @@ extern "C"{
 #define HVAC_SPS30_NEW_DATA_IS_READY                                0x01
 
 /**
+ * @brief HVAC SPS30 parameters.
+ * @details Specified SPS30 parameters of HVAC Click driver.
+ */
+#define HVAC_SPS30_WORD_SIZE                                        2
+#define HVAC_SPS30_CRC8_LEN                                         1
+#define HVAC_SPS30_NUM_WORDS(x)             (sizeof(x) / SENSIRION_WORD_SIZE)
+#define HVAC_SPS30_MAX_SERIAL_LEN                                   32
+#define HVAC_SPS30_SERIAL_NUM_WORDS         ((HVAC_SPS30_MAX_SERIAL_LEN) / 2)
+
+/**
  * @brief HVAC device address setting.
  * @details Specified setting for device slave address selection of
  * HVAC Click driver.
@@ -416,6 +426,23 @@ err_t hvac_sps30_i2c_write_data ( hvac_t *ctx, uint16_t reg, uint16_t tx_data );
 
 /**
  * @brief SPS30 generic read data function.
+ * @details The function read a data as bytes from the targeted register address
+ * of the SPS30 Particulate Matter Sensor for Air Quality Monitoring and Control
+ * on the HVAC click board.
+ * @param[in] ctx : Click context object.
+ * See #hvac_t object definition for detailed explanation.
+ * @param[in] reg : Register address.
+ * @param[out] rx_data : Pointer to the memory location where read bytes data be stored.
+ * @return @li @c  0 - Success,
+ *         @li @c -1 - Error.
+ * @param[in] len_rx_data : Length of rx_data.
+ *
+ * See #err_t definition for detailed explanation.
+ */
+err_t hvac_sps30_i2c_read_data_as_bytes ( hvac_t *ctx, uint16_t reg, uint8_t *rx_data, size_t len_rx_data );
+
+/**
+ * @brief SPS30 generic read data function.
  * @details The function read a 16-bit data from the targeted 16-bit
  * register address
  * of the SPS30 Particulate Matter Sensor for Air Quality Monitoring and Control
@@ -489,6 +516,22 @@ uint8_t hvac_sps30_get_ready_flag ( hvac_t *ctx );
  * @return Nothing.
  */
 void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data );
+
+/**
+ * @brief SPS30 read serial number.
+ * @details The function reads the serail number
+ * of the SPS30 Particulate Matter Sensor for Air Quality Monitoring and Control
+ * on the HVAC click board.
+ * @param[in] ctx : Click context object.
+ * See #hvac_t object definition for detailed explanation.
+ * @param[out] serial_number : Pointer to the memory location where serial number value be stored.
+ * @param[in] serial_buffer_size : Size of the serial_number parameter in bytes.
+ * @return @li @c  0 - Success,
+ *         @li @c -1 - Error.
+ *
+ * See #err_t definition for detailed explanation.
+ */
+err_t hvac_sps30_get_serial_number ( hvac_t *ctx, char *serial_number, size_t serial_buffer_size );
 
 #ifdef __cplusplus
 }
