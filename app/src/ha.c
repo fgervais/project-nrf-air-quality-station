@@ -18,8 +18,8 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 
 #define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s"
 #define LAST_WILL_TOPIC_FORMAT_STRING MQTT_BASE_PATH_FORMAT_STRING "/available"
-// #define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/sensor/%s/config"
-#define DISCOVERY_TOPIC_FORMAT_STRING	"test/sensor/%s/config"
+#define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/sensor/%s/config"
+// #define DISCOVERY_TOPIC_FORMAT_STRING	"test/sensor/%s/config"
 
 #define AIR_QUALITY_DEVICE {			\
 	.identifiers = device_id_hex_string,	\
