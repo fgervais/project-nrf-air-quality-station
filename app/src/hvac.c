@@ -234,6 +234,8 @@ err_t hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *read_data )
     tmp |= rx_buf[ 13 ];
 
     read_data->asc_last_correction = tmp;
+
+    return HVAC_OK;
 }
 
 err_t hvac_scd40_get_serial_number ( hvac_t *ctx, uint16_t *serial_number )
@@ -269,6 +271,8 @@ err_t hvac_scd40_get_serial_number ( hvac_t *ctx, uint16_t *serial_number )
     tmp |= rx_buf[ 7 ];
 
     serial_number[ 2 ] = tmp;
+
+    return HVAC_OK;
 }
 
 void hvac_scd40_get_feature_set_version ( hvac_t *ctx, feature_data_t *f_data )
