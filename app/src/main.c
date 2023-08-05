@@ -241,6 +241,7 @@ int main(void)
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
 	ha_register_sensor(&humidity_sensor);
+	ha_register_sensor(&co2_sensor);
 
 	// 1 measurement per second
 	ret = temphum24_default_cfg(&temphum24);
@@ -291,6 +292,8 @@ int main(void)
 		LOG_INF("├── Temperature = %.2f°C", hvac_data.temperature);
 		LOG_INF("└── R. Humidity = %.2f%%", hvac_data.r_humidity);
 
+		ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
+
 		// hvac_sps30_read_measured_data(&hvac, &sps30_data);
 
 		// LOG_INF("SPS30");
@@ -313,12 +316,17 @@ int main(void)
 			if (ret < 0) {
 				LOG_WRN("Could not send temperature, continuing");
 			}
-			number_of_readings = 0;
 
 			ret = ha_send_sensor_value(&humidity_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send humidity, continuing");
 			}
+
+			ret = ha_send_sensor_value(&co2_sensor);
+			if (ret < 0) {
+				LOG_WRN("Could not send CO2, continuing");
+			}
+
 			number_of_readings = 0;
 		}
 
