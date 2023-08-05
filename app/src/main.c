@@ -268,7 +268,7 @@ int main(void)
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
 
-	int number_of_readings = 0;
+	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
 
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
