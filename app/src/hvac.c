@@ -183,18 +183,23 @@ void hvac_scd40_send_cmd ( hvac_t *ctx, uint16_t cmd )
     i2c_master_write ( &ctx->i2c, tx_buf, 2 );
 }
 
-void hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *read_data )
+err_t hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *read_data )
 {
     uint8_t tx_buf[ 2 ];
     uint8_t rx_buf[ 15 ];
     uint16_t tmp;
     float f_temp;
+    err_t error_flag;
 
     tx_buf[ 0 ] = ( uint8_t ) ( HVAC_READ_MEASUREMENT >> 8 );
     tx_buf[ 1 ] = ( uint8_t ) HVAC_READ_MEASUREMENT;
 
-    i2c_master_write_then_read( &ctx->i2c, tx_buf, 2, rx_buf, 15 );
-    
+    error_flag = i2c_master_write_then_read( &ctx->i2c, tx_buf, 2, rx_buf, 15 );
+    if ( error_flag < 0 )
+    {
+        return HVAC_ERROR;
+    }
+
     tmp = rx_buf[ 0 ];
     tmp <<= 8;
     tmp |= rx_buf[ 1 ];
@@ -231,16 +236,21 @@ void hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *read_data )
     read_data->asc_last_correction = tmp;
 }
 
-void hvac_scd40_get_serial_number ( hvac_t *ctx, uint16_t *serial_number )
+err_t hvac_scd40_get_serial_number ( hvac_t *ctx, uint16_t *serial_number )
 {
     uint8_t tx_buf[ 3 ];
     uint8_t rx_buf[ 9 ];
     uint16_t tmp;
+    err_t error_flag;
 
     tx_buf[ 0 ] = ( uint8_t ) ( HVAC_GET_SERIAL_NUMBER >> 8 );
     tx_buf[ 1 ] = ( uint8_t ) HVAC_GET_SERIAL_NUMBER;
     
-    i2c_master_write_then_read( &ctx->i2c, tx_buf, 2, rx_buf, 9 );
+    error_flag = i2c_master_write_then_read( &ctx->i2c, tx_buf, 2, rx_buf, 9 );
+    if ( error_flag < 0 )
+    {
+        return HVAC_ERROR;
+    }
 
     tmp = rx_buf[ 0 ];
     tmp <<= 8;

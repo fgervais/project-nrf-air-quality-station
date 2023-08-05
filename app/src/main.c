@@ -24,7 +24,11 @@ static int get_scd4x_serial_as_string(hvac_t *hvac_ctx,
 	int ret;
 	uint16_t scd4x_serial_words[3];
 
-	hvac_scd40_get_serial_number(hvac_ctx, scd4x_serial_words);
+	ret = hvac_scd40_get_serial_number(hvac_ctx, scd4x_serial_words);
+	if (ret < 0) {
+		LOG_ERR("hvac: could not read scd4x serial number");
+		return ret;
+	}
 
 	ret = snprintf(sn_buf, sn_buf_size,
 		       "%04x%04x%04x",
@@ -188,6 +192,8 @@ int main(void)
 		return ret;
 	}
 
+	return 0;
+
 	// ret = get_sps30_serial_as_string(&hvac,
 	// 				 sps30_serial_string,
 	// 				 sizeof(sps30_serial_string));
@@ -285,7 +291,11 @@ int main(void)
 		ha_add_sensor_reading(&temperature_sensor, temperature);
 		ha_add_sensor_reading(&humidity_sensor, humidity);
 
-		hvac_scd40_read_measurement(&hvac, &hvac_data);
+		ret = hvac_scd40_read_measurement(&hvac, &hvac_data);
+		if (ret < 0) {
+			LOG_ERR("Could not read hvac module");
+			return ret;
+		}
 
 		LOG_INF("SCD4x");
 		LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
