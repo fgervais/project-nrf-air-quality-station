@@ -18,6 +18,32 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
 
 
+static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
+					char *sn_buf, size_t sn_buf_size)
+{
+	int ret;
+	uint16_t serial_number_words[3];
+
+	ret = temphum24_get_serial_number(temphum_ctx, serial_number_words);
+	if (ret < 0) {
+		LOG_ERR("temphum24: could not read hdc302x serial number");
+		return ret;
+	}
+
+	ret = snprintf(sn_buf, sn_buf_size,
+		       "%04x%04x%04x",
+		       serial_number_words[0],
+		       serial_number_words[1],
+		       serial_number_words[2]);
+	if (ret < 0 && ret >= sn_buf_size) {
+		LOG_ERR("Could not set sn_buf");
+		return -ENOMEM;
+	}
+
+	LOG_INF("HDC302x serial number: %s", sn_buf);
+	return 0;
+}
+
 static int get_scd4x_serial_as_string(hvac_t *hvac_ctx,
 				      char *sn_buf, size_t sn_buf_size)
 {
@@ -56,32 +82,6 @@ static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 	}
 
 	LOG_INF("SPS30 serial number: %s", sn_buf);
-	return 0;
-}
-
-static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
-					char *sn_buf, size_t sn_buf_size)
-{
-	int ret;
-	uint16_t serial_number_words[3];
-
-	ret = temphum24_get_serial_number(temphum_ctx, serial_number_words);
-	if (ret < 0) {
-		LOG_ERR("temphum24: could not read hdc302x serial number");
-		return ret;
-	}
-
-	ret = snprintf(sn_buf, sn_buf_size,
-		       "%04x%04x%04x",
-		       serial_number_words[0],
-		       serial_number_words[1],
-		       serial_number_words[2]);
-	if (ret < 0 && ret >= sn_buf_size) {
-		LOG_ERR("Could not set sn_buf");
-		return -ENOMEM;
-	}
-
-	LOG_INF("HDC302x serial number: %s", sn_buf);
 	return 0;
 }
 
