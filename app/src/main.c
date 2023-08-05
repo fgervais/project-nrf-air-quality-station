@@ -138,12 +138,14 @@ int main(void)
 		.suggested_display_precision = 1,
 	};
 
-	// struct ha_sensor co2_sensor = {
-	// 	.name = "CO₂",
-	// 	.unique_id = scd4x_co2_unique_id_string,
-	// 	.device_class = "carbon_dioxide",
-	// 	.state_class = "measurement",
-	// };
+	struct ha_sensor co2_sensor = {
+		.name = "CO₂",
+		.unique_id = scd4x_co2_unique_id_string,
+		.device_class = "carbon_dioxide",
+		.state_class = "measurement",
+		.unit_of_measurement = "ppm",
+		.suggested_display_precision = 0,
+	};
 
 	LOG_INF("\n\n🐨 MAIN START 🐨\n");
 
@@ -179,12 +181,12 @@ int main(void)
 		return ret;
 	}
 
-	// ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
-	// 				 sizeof(scd4x_serial_string));
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not get scd4x serial number string");
-	// 	return ret;
-	// }
+	ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
+					 sizeof(scd4x_serial_string));
+	if (ret < 0) {
+		LOG_ERR("Could not get scd4x serial number string");
+		return ret;
+	}
 
 	// ret = get_sps30_serial_as_string(&hvac,
 	// 				 sps30_serial_string,
@@ -212,14 +214,14 @@ int main(void)
 		return ret;
 	}
 
-	// ret = generate_unique_id(scd4x_co2_unique_id_string,
-	// 			 sizeof(scd4x_co2_unique_id_string),
-	// 			 "scd4x", "co2",
-	// 			 scd4x_serial_string);
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not generate scd4x unique id");
-	// 	return ret;
-	// }
+	ret = generate_unique_id(scd4x_co2_unique_id_string,
+				 sizeof(scd4x_co2_unique_id_string),
+				 "scd4x", "co2",
+				 scd4x_serial_string);
+	if (ret < 0) {
+		LOG_ERR("Could not generate scd4x unique id");
+		return ret;
+	}
 
 	// ret = generate_unique_id(sps30_pm25_unique_id_string,
 	// 			 sizeof(sps30_pm25_unique_id_string),
@@ -247,7 +249,7 @@ int main(void)
 		return ret;
 	}
 	// 1 measurement every 5 seconds
-	// hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
+	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	// New readings are available every second
 	// hvac_sps30_start_measurement (&hvac);
 
@@ -282,12 +284,12 @@ int main(void)
 		ha_add_sensor_reading(&temperature_sensor, temperature);
 		ha_add_sensor_reading(&humidity_sensor, humidity);
 
-		// hvac_scd40_read_measurement(&hvac, &hvac_data);
+		hvac_scd40_read_measurement(&hvac, &hvac_data);
 
-		// LOG_INF("SCD4x");
-		// LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
-		// LOG_INF("├── Temperature = %.2f °C", hvac_data.temperature);
-		// LOG_INF("└── R. Humidity = %.2f %%", hvac_data.r_humidity);
+		LOG_INF("SCD4x");
+		LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
+		LOG_INF("├── Temperature = %.2f°C", hvac_data.temperature);
+		LOG_INF("└── R. Humidity = %.2f%%", hvac_data.r_humidity);
 
 		// hvac_sps30_read_measured_data(&hvac, &sps30_data);
 
