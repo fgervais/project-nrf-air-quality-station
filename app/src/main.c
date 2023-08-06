@@ -378,11 +378,14 @@ int main(void)
 
 	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
 
+	bool non_fatal_error = false;
+
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
 						 &temperature, &humidity);
 		if (ret < 0) {
 			LOG_WRN("Could not read temperture and humidity");
+			non_fatal_error = true;
 		}
 		else {
 			LOG_INF("HDC302x");
@@ -396,6 +399,7 @@ int main(void)
 		ret = hvac_scd40_read_measurement(&hvac, &hvac_data);
 		if (ret < 0) {
 			LOG_WRN("Could not read hvac module");
+			non_fatal_error = true;
 		}
 		else {
 			LOG_INF("SCD4x");
@@ -427,20 +431,30 @@ int main(void)
 			ret = ha_send_sensor_value(&temperature_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send temperature");
+				non_fatal_error = true;
 			}
 
 			ret = ha_send_sensor_value(&humidity_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send humidity");
+				non_fatal_error = true;
 			}
 
 			ret = ha_send_sensor_value(&co2_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send CO2");
+				non_fatal_error = true;
 			}
 
 			number_of_readings = 0;
 		}
+
+		// It's non-fatal but the watchdog will take action if it
+		// keeps happening.
+		if (!non_fatal_error) {
+			wdt_feed(wdt, main_wdt_chan_id);
+		}
+		non_fatal_error = false;
 
 		LOG_INF("💤 end of main loop");
 		k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));
