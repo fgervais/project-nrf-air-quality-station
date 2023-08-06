@@ -76,7 +76,7 @@ static void print_all_reset_causes(uint32_t cause)
 {
 	for (uint32_t cause_mask = 1; cause_mask; cause_mask <<= 1) {
 		if (cause & cause_mask) {
-			LOG_INF("🚀 reset cause: %s",
+			LOG_INF("✨ reset cause: %s",
 				    cause_to_string(cause & cause_mask));
 		}
 	}
@@ -296,7 +296,7 @@ int main(void)
 		.suggested_display_precision = 0,
 	};
 
-	LOG_INF("\n\n🐨 MAIN START 🐨\n");
+	LOG_INF("\n\n🚀 MAIN START 🚀\n");
 
 	show_reset_cause();
 	clear_reset_cause();
