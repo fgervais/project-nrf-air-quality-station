@@ -227,8 +227,6 @@ int main(void)
 		return ret;
 	}
 
-	return 0;
-
 	// ret = get_sps30_serial_as_string(&hvac,
 	// 				 sps30_serial_string,
 	// 				 sizeof(sps30_serial_string));
