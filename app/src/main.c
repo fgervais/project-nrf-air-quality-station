@@ -452,6 +452,7 @@ int main(void)
 		// It's non-fatal but the watchdog will take action if it
 		// keeps happening.
 		if (!non_fatal_error) {
+			LOG_INF("🦴 feed watchdog");
 			wdt_feed(wdt, main_wdt_chan_id);
 		}
 		non_fatal_error = false;
