@@ -18,13 +18,43 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
 
 
+static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
+					char *sn_buf, size_t sn_buf_size)
+{
+	int ret;
+	uint16_t serial_number_words[3];
+
+	ret = temphum24_get_serial_number(temphum_ctx, serial_number_words);
+	if (ret < 0) {
+		LOG_ERR("temphum24: could not read hdc302x serial number");
+		return ret;
+	}
+
+	ret = snprintf(sn_buf, sn_buf_size,
+		       "%04x%04x%04x",
+		       serial_number_words[0],
+		       serial_number_words[1],
+		       serial_number_words[2]);
+	if (ret < 0 && ret >= sn_buf_size) {
+		LOG_ERR("Could not set sn_buf");
+		return -ENOMEM;
+	}
+
+	LOG_INF("HDC302x serial number: %s", sn_buf);
+	return 0;
+}
+
 static int get_scd4x_serial_as_string(hvac_t *hvac_ctx,
 				      char *sn_buf, size_t sn_buf_size)
 {
 	int ret;
 	uint16_t scd4x_serial_words[3];
 
-	hvac_scd40_get_serial_number(hvac_ctx, scd4x_serial_words);
+	ret = hvac_scd40_get_serial_number(hvac_ctx, scd4x_serial_words);
+	if (ret < 0) {
+		LOG_ERR("hvac: could not read scd4x serial number");
+		return ret;
+	}
 
 	ret = snprintf(sn_buf, sn_buf_size,
 		       "%04x%04x%04x",
@@ -55,32 +85,6 @@ static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 	return 0;
 }
 
-static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
-					char *sn_buf, size_t sn_buf_size)
-{
-	int ret;
-	uint16_t serial_number_words[3];
-
-	ret = temphum24_get_serial_number(temphum_ctx, serial_number_words);
-	if (ret < 0) {
-		LOG_ERR("temphum24: could not read hdc302x serial number");
-		return ret;
-	}
-
-	ret = snprintf(sn_buf, sn_buf_size,
-		       "%04x%04x%04x",
-		       serial_number_words[0],
-		       serial_number_words[1],
-		       serial_number_words[2]);
-	if (ret < 0 && ret >= sn_buf_size) {
-		LOG_ERR("Could not set sn_buf");
-		return -ENOMEM;
-	}
-
-	LOG_INF("HDC302x serial number: %s", sn_buf);
-	return 0;
-}
-
 
 static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
 			      const char *part_number,
@@ -101,15 +105,58 @@ static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
 	return 0;
 }
 
+static void scd4x_reset(hvac_t *hvac)
+{
+	hvac_scd40_send_cmd(hvac, HVAC_STOP_PERIODIC_MEASUREMENT);
+	k_sleep(K_MSEC(500));
+	hvac_scd40_send_cmd(hvac, HVAC_REINIT);
+	k_sleep(K_MSEC(30));
+}
+
+static int temphum24_click_init(temphum24_t *temphum24)
+{
+	int ret;
+	temphum24_cfg_t temphum24_cfg;
+
+	temphum24_cfg_setup(&temphum24_cfg);
+	temphum24->i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+	temphum24->rst.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	temphum24->alert.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	temphum24_cfg.rst = 5;
+	temphum24_cfg.alert = 29;
+	ret = temphum24_init(temphum24, &temphum24_cfg);
+	if (ret < 0) {
+		LOG_ERR("Could not initialize hdc302x");
+		return ret;
+	}
+
+	return 0;
+}
+
+static int hvac_click_init(hvac_t *hvac)
+{
+	int ret;
+	hvac_cfg_t hvac_cfg;
+
+	hvac_cfg_setup(&hvac_cfg);
+	hvac->i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+	ret = hvac_init(hvac, &hvac_cfg);
+	if (ret < 0) {
+		LOG_ERR("Could not initialize hvac");
+		return ret;
+	}
+
+	scd4x_reset(hvac);
+
+	return 0;
+}
+
 int main(void)
 {
 	int ret;
 
 	temphum24_t temphum24;
-	temphum24_cfg_t temphum24_cfg;
-
 	hvac_t hvac;
-	hvac_cfg_t hvac_cfg;
 
 	char hdc302x_serial_string[128];
 	char scd4x_serial_string[128];
@@ -138,34 +185,28 @@ int main(void)
 		.suggested_display_precision = 1,
 	};
 
-	// struct ha_sensor co2_sensor = {
-	// 	.name = "CO₂",
-	// 	.unique_id = scd4x_co2_unique_id_string,
-	// 	.device_class = "carbon_dioxide",
-	// 	.state_class = "measurement",
-	// };
+	struct ha_sensor co2_sensor = {
+		.name = "CO₂",
+		.unique_id = scd4x_co2_unique_id_string,
+		.device_class = "carbon_dioxide",
+		.state_class = "measurement",
+		.unit_of_measurement = "ppm",
+		.suggested_display_precision = 0,
+	};
 
 	LOG_INF("\n\n🐨 MAIN START 🐨\n");
 
 	openthread_enable_ready_flag();
 
-	temphum24_cfg_setup(&temphum24_cfg);
-	temphum24.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-	temphum24.rst.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
-	temphum24.alert.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
-	temphum24_cfg.rst = 5;
-	temphum24_cfg.alert = 29;
-	ret = temphum24_init(&temphum24, &temphum24_cfg);
+	ret = temphum24_click_init(&temphum24);
 	if (ret < 0) {
-		LOG_ERR("Could not initialize hdc302x");
+		LOG_ERR("Could not initialize temphum24 click");
 		return ret;
 	}
 
-	hvac_cfg_setup(&hvac_cfg);
-	hvac.i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-	ret = hvac_init(&hvac, &hvac_cfg);
+	ret = hvac_click_init(&hvac);
 	if (ret < 0) {
-		LOG_ERR("Could not initialize hvac");
+		LOG_ERR("Could not initialize hvac click");
 		return ret;
 	}
 
@@ -179,12 +220,12 @@ int main(void)
 		return ret;
 	}
 
-	// ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
-	// 				 sizeof(scd4x_serial_string));
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not get scd4x serial number string");
-	// 	return ret;
-	// }
+	ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
+					 sizeof(scd4x_serial_string));
+	if (ret < 0) {
+		LOG_ERR("Could not get scd4x serial number string");
+		return ret;
+	}
 
 	// ret = get_sps30_serial_as_string(&hvac,
 	// 				 sps30_serial_string,
@@ -212,14 +253,14 @@ int main(void)
 		return ret;
 	}
 
-	// ret = generate_unique_id(scd4x_co2_unique_id_string,
-	// 			 sizeof(scd4x_co2_unique_id_string),
-	// 			 "scd4x", "co2",
-	// 			 scd4x_serial_string);
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not generate scd4x unique id");
-	// 	return ret;
-	// }
+	ret = generate_unique_id(scd4x_co2_unique_id_string,
+				 sizeof(scd4x_co2_unique_id_string),
+				 "scd4x", "co2",
+				 scd4x_serial_string);
+	if (ret < 0) {
+		LOG_ERR("Could not generate scd4x unique id");
+		return ret;
+	}
 
 	// ret = generate_unique_id(sps30_pm25_unique_id_string,
 	// 			 sizeof(sps30_pm25_unique_id_string),
@@ -239,6 +280,7 @@ int main(void)
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
 	ha_register_sensor(&humidity_sensor);
+	ha_register_sensor(&co2_sensor);
 
 	// 1 measurement per second
 	ret = temphum24_default_cfg(&temphum24);
@@ -247,7 +289,7 @@ int main(void)
 		return ret;
 	}
 	// 1 measurement every 5 seconds
-	// hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
+	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	// New readings are available every second
 	// hvac_sps30_start_measurement (&hvac);
 
@@ -265,29 +307,35 @@ int main(void)
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
 
-	int number_of_readings = 0;
+	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
 
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
 						 &temperature, &humidity);
 		if (ret < 0) {
-			LOG_ERR("Could not read temperture and humidity");
-			return ret;
+			LOG_WRN("Could not read temperture and humidity");
+		}
+		else {
+			LOG_INF("HDC302x");
+			LOG_INF("├── Temperature: %.2f°C", temperature);
+			LOG_INF("└── Humidity: %.1f%%", humidity);
+
+			ha_add_sensor_reading(&temperature_sensor, temperature);
+			ha_add_sensor_reading(&humidity_sensor, humidity);
 		}
 
-		LOG_INF("HDC302x");
-		LOG_INF("├── Temperature: %.2f°C", temperature);
-		LOG_INF("└── Humidity: %.1f%%", humidity);
+		ret = hvac_scd40_read_measurement(&hvac, &hvac_data);
+		if (ret < 0) {
+			LOG_WRN("Could not read hvac module");
+		}
+		else {
+			LOG_INF("SCD4x");
+			LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
+			LOG_INF("├── Temperature = %.2f°C", hvac_data.temperature);
+			LOG_INF("└── R. Humidity = %.2f%%", hvac_data.r_humidity);
 
-		ha_add_sensor_reading(&temperature_sensor, temperature);
-		ha_add_sensor_reading(&humidity_sensor, humidity);
-
-		// hvac_scd40_read_measurement(&hvac, &hvac_data);
-
-		// LOG_INF("SCD4x");
-		// LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
-		// LOG_INF("├── Temperature = %.2f °C", hvac_data.temperature);
-		// LOG_INF("└── R. Humidity = %.2f %%", hvac_data.r_humidity);
+			ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
+		}
 
 		// hvac_sps30_read_measured_data(&hvac, &sps30_data);
 
@@ -309,14 +357,19 @@ int main(void)
 		if (number_of_readings >= NUMBER_OF_READINGS_IN_AVERAGE) {
 			ret = ha_send_sensor_value(&temperature_sensor);
 			if (ret < 0) {
-				LOG_WRN("Could not send temperature, continuing");
+				LOG_WRN("Could not send temperature");
 			}
-			number_of_readings = 0;
 
 			ret = ha_send_sensor_value(&humidity_sensor);
 			if (ret < 0) {
-				LOG_WRN("Could not send humidity, continuing");
+				LOG_WRN("Could not send humidity");
 			}
+
+			ret = ha_send_sensor_value(&co2_sensor);
+			if (ret < 0) {
+				LOG_WRN("Could not send CO2");
+			}
+
 			number_of_readings = 0;
 		}
 

@@ -417,6 +417,10 @@ int ha_send_sensor_value(struct ha_sensor *sensor)
 	int ret;
 	char value_string[16];
 
+	if (sensor->number_of_values == 0) {
+		goto out;
+	}
+
 	ret = snprintf(value_string, sizeof(value_string),
 		       "%g",
 		       sensor->total_value / sensor->number_of_values);
@@ -434,5 +438,6 @@ int ha_send_sensor_value(struct ha_sensor *sensor)
 	sensor->total_value = 0;
 	sensor->number_of_values = 0;
 
+out:
 	return 0;
 }

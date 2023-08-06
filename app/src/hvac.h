@@ -356,9 +356,12 @@ void hvac_scd40_send_cmd ( hvac_t *ctx, uint16_t cmd );
  * @param[in] ctx : Click context object.
  * See #hvac_t object definition for detailed explanation.
  * @param[in] m_data : Pointer to the memory location where structure data be stored.
- * @return Nothing.
+ * @return @li @c  0 - Success,
+ *         @li @c -1 - Error.
+ *
+ * See #err_t definition for detailed explanation.
  */
-void hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *m_data );
+err_t hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *m_data );
 
 /**
  * @brief SCD40 get serial number function.
@@ -368,9 +371,12 @@ void hvac_scd40_read_measurement ( hvac_t *ctx, measuremen_data_t *m_data );
  * @param[in] ctx : Click context object.
  * See #hvac_t object definition for detailed explanation.
  * @param[in] serial_number : Pointer to the memory location where serial numbe value be stored.
- * @return Nothing.
+ * @return @li @c  0 - Success,
+ *         @li @c -1 - Error.
+ *
+ * See #err_t definition for detailed explanation.
  */
-void hvac_scd40_get_serial_number ( hvac_t *ctx, uint16_t *serial_number );
+err_t hvac_scd40_get_serial_number ( hvac_t *ctx, uint16_t *serial_number );
 
 /**
  * @brief SCD40 get feature set version function.
