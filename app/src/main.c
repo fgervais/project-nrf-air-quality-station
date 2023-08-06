@@ -313,29 +313,29 @@ int main(void)
 		ret = temphum24_read_temp_and_rh(&temphum24,
 						 &temperature, &humidity);
 		if (ret < 0) {
-			LOG_ERR("Could not read temperture and humidity");
-			return ret;
+			LOG_WRN("Could not read temperture and humidity");
 		}
+		else {
+			LOG_INF("HDC302x");
+			LOG_INF("├── Temperature: %.2f°C", temperature);
+			LOG_INF("└── Humidity: %.1f%%", humidity);
 
-		LOG_INF("HDC302x");
-		LOG_INF("├── Temperature: %.2f°C", temperature);
-		LOG_INF("└── Humidity: %.1f%%", humidity);
-
-		ha_add_sensor_reading(&temperature_sensor, temperature);
-		ha_add_sensor_reading(&humidity_sensor, humidity);
+			ha_add_sensor_reading(&temperature_sensor, temperature);
+			ha_add_sensor_reading(&humidity_sensor, humidity);
+		}
 
 		ret = hvac_scd40_read_measurement(&hvac, &hvac_data);
 		if (ret < 0) {
-			LOG_ERR("Could not read hvac module");
-			return ret;
+			LOG_WRN("Could not read hvac module");
 		}
+		else {
+			LOG_INF("SCD4x");
+			LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
+			LOG_INF("├── Temperature = %.2f°C", hvac_data.temperature);
+			LOG_INF("└── R. Humidity = %.2f%%", hvac_data.r_humidity);
 
-		LOG_INF("SCD4x");
-		LOG_INF("├── CO2 Concentration = %d ppm", hvac_data.co2_concent);
-		LOG_INF("├── Temperature = %.2f°C", hvac_data.temperature);
-		LOG_INF("└── R. Humidity = %.2f%%", hvac_data.r_humidity);
-
-		ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
+			ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
+		}
 
 		// hvac_sps30_read_measured_data(&hvac, &sps30_data);
 
@@ -357,17 +357,17 @@ int main(void)
 		if (number_of_readings >= NUMBER_OF_READINGS_IN_AVERAGE) {
 			ret = ha_send_sensor_value(&temperature_sensor);
 			if (ret < 0) {
-				LOG_WRN("Could not send temperature, continuing");
+				LOG_WRN("Could not send temperature");
 			}
 
 			ret = ha_send_sensor_value(&humidity_sensor);
 			if (ret < 0) {
-				LOG_WRN("Could not send humidity, continuing");
+				LOG_WRN("Could not send humidity");
 			}
 
 			ret = ha_send_sensor_value(&co2_sensor);
 			if (ret < 0) {
-				LOG_WRN("Could not send CO2, continuing");
+				LOG_WRN("Could not send CO2");
 			}
 
 			number_of_readings = 0;
