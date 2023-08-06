@@ -214,7 +214,7 @@ static int watchdog_init(const struct device *wdt,
 int main(void)
 {
 	int ret;
-	int watchdog_main_chan_id, watchdog_mqtt_chan_id;
+	int main_wdt_chan_id, mqtt_wdt_chan_id;
 
 	temphum24_t temphum24;
 	hvac_t hvac;
@@ -254,6 +254,10 @@ int main(void)
 		.unit_of_measurement = "ppm",
 		.suggested_display_precision = 0,
 	};
+
+	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
+
+	watchdog_init(wdt, &main_wdt_chan_id, &mqtt_wdt_chan_id);
 
 	LOG_INF("\n\n🚀 MAIN START 🚀\n");
 
@@ -337,9 +341,9 @@ int main(void)
 
 	while (!openthread_is_ready())
 		k_sleep(K_MSEC(100));
+	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
 
-	// Something else is not ready, not sure what
-	k_sleep(K_MSEC(100));
+	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
 
 	ha_start();
 	ha_register_sensor(&temperature_sensor);
