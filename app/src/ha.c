@@ -166,7 +166,7 @@ static const struct json_obj_descr binary_sensor_config_descr[] = {
 // Best practice for entities with a unique_id is to set <object_id> to
 // unique_id and omit the <node_id>.
 // https://www.home-assistant.io/integrations/mqtt/#discovery-topic
-static int ha_send_discovery(const char *component,
+static int ha_send_discovery(const char *sensor_type,
 			     struct ha_sensor_config *conf)
 {
 	int ret;
@@ -175,11 +175,11 @@ static int ha_send_discovery(const char *component,
 
 	snprintf(discovery_topic, sizeof(discovery_topic),
 		 DISCOVERY_TOPIC_FORMAT_STRING,
-		 component, conf->unique_id);
+		 sensor_type, conf->unique_id);
 
 	LOG_DBG("discovery topic: %s", discovery_topic);
 
-	if (strncmp(component, "sensor", strlen("sensor")) == 0) {
+	if (strcmp(sensor_type, "sensor") == 0) {
 		ret = json_obj_encode_buf(
 			sensor_config_descr, ARRAY_SIZE(sensor_config_descr),
 			conf, json_config, sizeof(json_config));
@@ -188,7 +188,7 @@ static int ha_send_discovery(const char *component,
 			return ret;
 		}
 	}
-	else if (strncmp(component, "binary_sensor", strlen("binary_sensor")) == 0) {
+	else if (strcmp(sensor_type, "binary_sensor") == 0) {
 		ret = json_obj_encode_buf(
 			binary_sensor_config_descr,
 			ARRAY_SIZE(binary_sensor_config_descr),
@@ -268,9 +268,9 @@ int ha_add_sensor_reading(struct ha_sensor *sensor, double value)
 	return 0;
 }
 
-int ha_add_sensor_reading_bool(struct ha_sensor *sensor, bool value)
+int ha_set_binary_sensor_state(struct ha_sensor *sensor, bool state)
 {
-	sensor->total_value = value;
+	sensor->binary_state = state;
 
 	return 0;
 }
@@ -321,7 +321,7 @@ int ha_register_sensor(struct ha_sensor *sensor)
 
 	ret = snprintf(brief_state_topic, sizeof(brief_state_topic),
 		       "~/%s/%s/state",
-		       sensor->component, sensor->unique_id);
+		       sensor->type, sensor->unique_id);
 	if (ret < 0 && ret >= sizeof(brief_state_topic)) {
 		LOG_ERR("Could not set brief_state_topic");
 		return -ENOMEM;
@@ -337,7 +337,7 @@ int ha_register_sensor(struct ha_sensor *sensor)
 	}
 
 	LOG_INF("📖 send discovery");
-	ret = ha_send_discovery(sensor->component, &ha_sensor_config);
+	ret = ha_send_discovery(sensor->type, &ha_sensor_config);
 	if (ret < 0) {
 		LOG_ERR("Could not send discovery");
 		return ret;
@@ -376,7 +376,7 @@ out:
 	return 0;
 }
 
-int ha_send_sensor_value_bool(struct ha_sensor *sensor)
+int ha_send_binary_sensor_state(struct ha_sensor *sensor)
 {
 	int ret;
 
