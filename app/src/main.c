@@ -11,6 +11,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 #include "ha.h"
 #include "hvac.h"
+#include "mqtt.h"
 #include "openthread.h"
 #include "reset.h"
 #include "temphum24.h"
