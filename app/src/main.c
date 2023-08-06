@@ -214,7 +214,7 @@ static int watchdog_init(const struct device *wdt,
 int main(void)
 {
 	int ret;
-	int main_wdt_chan_id, mqtt_wdt_chan_id;
+	int main_wdt_chan_id = -1, mqtt_wdt_chan_id = -1;
 
 	temphum24_t temphum24;
 	hvac_t hvac;
