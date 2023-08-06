@@ -14,6 +14,9 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #define JSON_CONFIG_BUFFER_SIZE		1024
 #define UNIQUE_ID_BUFFER_SIZE		64
 
+#define SENSOR_TYPE		"sensor"
+#define BINARY_SENSOR_TYPE	"binary_sensor"
+
 #define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s"
 #define LAST_WILL_TOPIC_FORMAT_STRING MQTT_BASE_PATH_FORMAT_STRING "/available"
 #define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/%s/%s/config"
@@ -254,23 +257,17 @@ int ha_set_online()
 
 int ha_init_sensor(struct ha_sensor *sensor)
 {
+	sensor->type = SENSOR_TYPE;
 	sensor->total_value = 0;
 	sensor->number_of_values = 0;
 
 	return 0;
 }
 
-int ha_add_sensor_reading(struct ha_sensor *sensor, double value)
+int ha_init_binary_sensor(struct ha_sensor *sensor)
 {
-	sensor->total_value += value;
-	sensor->number_of_values += 1;
-
-	return 0;
-}
-
-int ha_set_binary_sensor_state(struct ha_sensor *sensor, bool state)
-{
-	sensor->binary_state = state;
+	sensor->type = BINARY_SENSOR_TYPE;
+	sensor->binary_state = false;
 
 	return 0;
 }
@@ -342,6 +339,21 @@ int ha_register_sensor(struct ha_sensor *sensor)
 		LOG_ERR("Could not send discovery");
 		return ret;
 	}
+
+	return 0;
+}
+
+int ha_add_sensor_reading(struct ha_sensor *sensor, double value)
+{
+	sensor->total_value += value;
+	sensor->number_of_values += 1;
+
+	return 0;
+}
+
+int ha_set_binary_sensor_state(struct ha_sensor *sensor, bool state)
+{
+	sensor->binary_state = state;
 
 	return 0;
 }

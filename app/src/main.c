@@ -256,14 +256,12 @@ int main(void)
 	char sps30_pm25_unique_id_string[128];
 
 	struct ha_sensor watchdog_triggered_sensor = {
-		.type = HA_BINARY_SENSOR_TYPE,
 		.name = "Watchdog",
 		.unique_id = device_watchdog_unique_id_string,
 		.device_class = "problem",
 	};
 
 	struct ha_sensor temperature_sensor = {
-		.type = HA_SENSOR_TYPE,
 		.name = "Temperature",
 		.unique_id = hdc302x_temp_unique_id_string,
 		.device_class = "temperature",
@@ -273,7 +271,6 @@ int main(void)
 	};
 
 	struct ha_sensor humidity_sensor = {
-		.type = HA_SENSOR_TYPE,
 		.name = "Humidity",
 		.unique_id = hdc302x_hum_unique_id_string,
 		.device_class = "humidity",
@@ -283,7 +280,6 @@ int main(void)
 	};
 
 	struct ha_sensor co2_sensor = {
-		.type = HA_SENSOR_TYPE,
 		.name = "CO₂",
 		.unique_id = scd4x_co2_unique_id_string,
 		.device_class = "carbon_dioxide",
@@ -400,6 +396,11 @@ int main(void)
 	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
 
 	ha_start(device_id_hex_string);
+
+	ha_init_sensor(&temperature_sensor);
+	ha_init_sensor(&humidity_sensor);
+	ha_init_sensor(&co2_sensor);
+
 	ha_register_sensor(&temperature_sensor);
 	ha_register_sensor(&humidity_sensor);
 	ha_register_sensor(&co2_sensor);
