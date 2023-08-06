@@ -1,6 +1,9 @@
 #ifndef MQTT_H_
 #define MQTT_H_
 
+#include <zephyr/device.h>
+
+
 struct mqtt_subscription {
 	const char *topic;
 	void (*callback)(const char *);
