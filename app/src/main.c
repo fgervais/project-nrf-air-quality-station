@@ -249,12 +249,21 @@ int main(void)
 	char scd4x_serial_string[128];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
 
+	char device_watchdog_unique_id_string[128];
 	char hdc302x_temp_unique_id_string[128];
 	char hdc302x_hum_unique_id_string[128];
 	char scd4x_co2_unique_id_string[128];
 	char sps30_pm25_unique_id_string[128];
 
+	struct ha_sensor watchdog_triggered_sensor = {
+		.component = "binary_sensor",
+		.name = "Watchdog",
+		.unique_id = device_watchdog_unique_id_string,
+		.device_class = "problem",
+	};
+
 	struct ha_sensor temperature_sensor = {
+		.component = "sensor",
 		.name = "Temperature",
 		.unique_id = hdc302x_temp_unique_id_string,
 		.device_class = "temperature",
@@ -264,6 +273,7 @@ int main(void)
 	};
 
 	struct ha_sensor humidity_sensor = {
+		.component = "sensor",
 		.name = "Humidity",
 		.unique_id = hdc302x_hum_unique_id_string,
 		.device_class = "humidity",
@@ -273,6 +283,7 @@ int main(void)
 	};
 
 	struct ha_sensor co2_sensor = {
+		.component = "sensor",
 		.name = "CO₂",
 		.unique_id = scd4x_co2_unique_id_string,
 		.device_class = "carbon_dioxide",
@@ -336,6 +347,15 @@ int main(void)
 	// 	LOG_ERR("Could not get sps30 serial number string");
 	// 	return ret;
 	// }
+
+	ret = generate_unique_id(device_watchdog_unique_id_string,
+				 sizeof(device_watchdog_unique_id_string),
+				 "hdc302x", "wdt",
+				 device_id_hex_string);
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x temperature unique id");
+		return ret;
+	}
 
 	ret = generate_unique_id(hdc302x_temp_unique_id_string,
 				 sizeof(hdc302x_temp_unique_id_string),
