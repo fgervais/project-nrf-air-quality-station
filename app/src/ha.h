@@ -19,7 +19,7 @@ struct ha_sensor {
 	char full_state_topic[HA_TOPIC_BUFFER_SIZE];
 };
 
-int ha_start();
+int ha_start(const char *device_id);
 int ha_set_online();
 int ha_init_sensor(struct ha_sensor *);
 int ha_add_sensor_reading(struct ha_sensor *, double value);

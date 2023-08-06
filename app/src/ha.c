@@ -2,7 +2,6 @@
 LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 
 #include <zephyr/data/json.h>
-#include <zephyr/drivers/hwinfo.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +11,6 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #include "mqtt.h"
 
 
-#define DEVICE_ID_BYTE_SIZE		8
 #define JSON_CONFIG_BUFFER_SIZE		1024
 #define UNIQUE_ID_BUFFER_SIZE		64
 
@@ -54,13 +52,8 @@ struct ha_sensor_config {
 };
 
 
-static char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
+static const char *device_id_hex_string;
 static char mqtt_base_path[HA_TOPIC_BUFFER_SIZE];
-// static char *scd4x_sn;
-// static char *sps30_sn;
-
-// static char unique_id_co2[UNIQUE_ID_BUFFER_SIZE];
-// static char unique_id_pm25[UNIQUE_ID_BUFFER_SIZE];
 
 static char last_will_topic[HA_TOPIC_BUFFER_SIZE];
 static const char *last_will_message = "offline";
@@ -150,26 +143,6 @@ static const struct json_obj_descr config_descr[] = {
 // 	}
 // }
 
-static int get_device_id_string(char *id_string, size_t id_string_len)
-{
-	uint8_t dev_id[DEVICE_ID_BYTE_SIZE];
-	ssize_t length;
-
-	length = hwinfo_get_device_id(dev_id, sizeof(dev_id));
-
-	if (length == -ENOTSUP) {
-		LOG_ERR("Not supported by hardware");
-		return -ENOTSUP;
-	} else if (length < 0) {
-		LOG_ERR("Error: %zd", length);
-		return length;
-	}
-
-	bin2hex(dev_id, ARRAY_SIZE(dev_id), id_string, id_string_len);
-
-	return 0;
-}
-
 // static int ha_subscribe_to_topics(void)
 // {
 // 	mqtt_subscribe_to_topic(subs, ARRAY_SIZE(subs));
@@ -248,23 +221,11 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 // 	return 0;
 // }
 
-int ha_start()
+int ha_start(const char *device_id)
 {
 	int ret;
 
-	// mode_change_callback = mode_change_cb;
-	// temperature_setpoint_change_callback = temperature_setpoint_change_cb;
-
-	ret = get_device_id_string(
-		device_id_hex_string,
-		ARRAY_SIZE(device_id_hex_string));
-	if (ret < 0) {
-		LOG_ERR("Could not get device ID");
-		return ret;
-	}
-
-	// LOG_INF("Device ID: %s", co2_config.dev.identifiers);
-	// LOG_INF("Version: %s", co2_config.dev.sw_version);
+	device_id_hex_string = device_id;
 
 	ret = snprintf(mqtt_base_path, sizeof(mqtt_base_path),
 		 MQTT_BASE_PATH_FORMAT_STRING, device_id_hex_string);

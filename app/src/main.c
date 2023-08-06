@@ -1,4 +1,5 @@
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/hwinfo.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
@@ -17,9 +18,31 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "temphum24.h"
 
 
+#define DEVICE_ID_BYTE_SIZE			8
+
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
 
+
+static int get_device_id_string(char *id_string, size_t id_string_len)
+{
+	uint8_t dev_id[DEVICE_ID_BYTE_SIZE];
+	ssize_t length;
+
+	length = hwinfo_get_device_id(dev_id, sizeof(dev_id));
+
+	if (length == -ENOTSUP) {
+		LOG_ERR("Not supported by hardware");
+		return -ENOTSUP;
+	} else if (length < 0) {
+		LOG_ERR("Error: %zd", length);
+		return length;
+	}
+
+	bin2hex(dev_id, ARRAY_SIZE(dev_id), id_string, id_string_len);
+
+	return 0;
+}
 
 static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
 					char *sn_buf, size_t sn_buf_size)
@@ -217,6 +240,8 @@ int main(void)
 	int ret;
 	int main_wdt_chan_id = -1, mqtt_wdt_chan_id = -1;
 
+	char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
+
 	temphum24_t temphum24;
 	hvac_t hvac;
 
@@ -266,6 +291,14 @@ int main(void)
 	clear_reset_cause();
 
 	openthread_enable_ready_flag();
+
+	ret = get_device_id_string(
+		device_id_hex_string,
+		ARRAY_SIZE(device_id_hex_string));
+	if (ret < 0) {
+		LOG_ERR("Could not get device ID");
+		return ret;
+	}
 
 	ret = temphum24_click_init(&temphum24);
 	if (ret < 0) {
@@ -346,7 +379,7 @@ int main(void)
 
 	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
 
-	ha_start();
+	ha_start(device_id_hex_string);
 	ha_register_sensor(&temperature_sensor);
 	ha_register_sensor(&humidity_sensor);
 	ha_register_sensor(&co2_sensor);
