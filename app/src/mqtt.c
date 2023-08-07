@@ -15,7 +15,7 @@ LOG_MODULE_REGISTER(mqtt, LOG_LEVEL_DBG);
 #include "mqtt.h"
 
 
-#define MQTT_BUFFER_SIZE	16384
+#define MQTT_BUFFER_SIZE	1024
 
 
 static uint8_t rx_buffer[MQTT_BUFFER_SIZE];
