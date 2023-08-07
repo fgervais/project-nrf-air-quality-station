@@ -104,3 +104,8 @@ int clear_reset_cause(void)
 
 	return 0;
 }
+
+bool is_reset_cause_watchdog(uint32_t cause)
+{
+	return cause == RESET_WATCHDOG;
+}

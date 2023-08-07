@@ -241,6 +241,7 @@ int main(void)
 {
 	int ret;
 	int main_wdt_chan_id = -1, mqtt_wdt_chan_id = -1;
+	uint32_t reset_cause;
 
 	char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
 
@@ -296,7 +297,7 @@ int main(void)
 
 	LOG_INF("\n\n🚀 MAIN START 🚀\n");
 
-	show_reset_cause();
+	reset_cause = show_reset_cause();
 	clear_reset_cause();
 
 	openthread_enable_ready_flag();
@@ -399,10 +400,12 @@ int main(void)
 
 	ha_start(device_id_hex_string);
 
+	ha_init_binary_sensor(&watchdog_triggered_sensor);
 	ha_init_sensor(&temperature_sensor);
 	ha_init_sensor(&humidity_sensor);
 	ha_init_sensor(&co2_sensor);
 
+	ha_register_sensor(&watchdog_triggered_sensor);
 	ha_register_sensor(&temperature_sensor);
 	ha_register_sensor(&humidity_sensor);
 	ha_register_sensor(&co2_sensor);
@@ -424,6 +427,10 @@ int main(void)
 	// We set the device online a little after sensor registrations
 	// so HA gets time to process the sensor registrations first.
 	ha_set_online();
+
+	ha_set_binary_sensor_state(&watchdog_triggered_sensor,
+				   is_reset_cause_watchdog(reset_cause));
+	ha_send_binary_sensor_state(&watchdog_triggered_sensor);
 
 	LOG_INF("🎉 init done 🎉");
 
