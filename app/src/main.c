@@ -421,8 +421,8 @@ int main(void)
 	LOG_INF("💤 waiting for all sensors to be ready");
 	k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));
 
-	// We set the device online after 10 seconds so HA gets time to
-	// process the sensor registrations first.
+	// We set the device online a little after sensor registrations
+	// so HA gets time to process the sensor registrations first.
 	ha_set_online();
 
 	LOG_INF("🎉 init done 🎉");
