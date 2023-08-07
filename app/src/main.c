@@ -41,6 +41,8 @@ static int get_device_id_string(char *id_string, size_t id_string_len)
 
 	bin2hex(dev_id, ARRAY_SIZE(dev_id), id_string, id_string_len);
 
+	LOG_INF("CPU device id: %s", id_string);
+
 	return 0;
 }
 
