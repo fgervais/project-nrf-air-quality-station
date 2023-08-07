@@ -393,7 +393,7 @@ int ha_send_binary_sensor_state(struct ha_sensor *sensor)
 	int ret;
 
 	ret = mqtt_publish_to_topic(sensor->full_state_topic,
-		sensor->total_value ? "on" : "off", false);
+		sensor->total_value ? "ON" : "OFF", false);
 	if (ret < 0) {
 		LOG_ERR("Count not publish to topic");
 		return ret;
