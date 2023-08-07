@@ -19,6 +19,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 
 #define DEVICE_ID_BYTE_SIZE			8
+#define UNIQUE_ID_STRING_SIZE			32
 
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
@@ -248,15 +249,15 @@ int main(void)
 	temphum24_t temphum24;
 	hvac_t hvac;
 
-	char hdc302x_serial_string[128];
-	char scd4x_serial_string[128];
+	char hdc302x_serial_string[UNIQUE_ID_STRING_SIZE];
+	char scd4x_serial_string[UNIQUE_ID_STRING_SIZE];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
 
-	char device_watchdog_unique_id_string[128];
-	char hdc302x_temp_unique_id_string[128];
-	char hdc302x_hum_unique_id_string[128];
-	char scd4x_co2_unique_id_string[128];
-	char sps30_pm25_unique_id_string[128];
+	char device_watchdog_unique_id_string[UNIQUE_ID_STRING_SIZE];
+	char hdc302x_temp_unique_id_string[UNIQUE_ID_STRING_SIZE];
+	char hdc302x_hum_unique_id_string[UNIQUE_ID_STRING_SIZE];
+	char scd4x_co2_unique_id_string[UNIQUE_ID_STRING_SIZE];
+	char sps30_pm25_unique_id_string[UNIQUE_ID_STRING_SIZE];
 
 	struct ha_sensor watchdog_triggered_sensor = {
 		.name = "Watchdog",
