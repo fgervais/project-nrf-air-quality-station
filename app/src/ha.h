@@ -13,11 +13,11 @@ struct ha_sensor {
 	const char *unit_of_measurement;
 	int suggested_display_precision;
 
+	// Internal use
 	double total_value;
 	int number_of_values;
 	bool binary_state;
 
-	// Internal use
 	char full_state_topic[HA_TOPIC_BUFFER_SIZE];
 };
 
