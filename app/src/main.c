@@ -348,7 +348,7 @@ int main(void)
 
 	ret = generate_unique_id(device_watchdog_unique_id_string,
 				 sizeof(device_watchdog_unique_id_string),
-				 "hdc302x", "wdt",
+				 "nrf52840", "wdt",
 				 device_id_hex_string);
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x temperature unique id");
