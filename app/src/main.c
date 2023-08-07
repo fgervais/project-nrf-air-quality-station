@@ -1,4 +1,6 @@
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/hwinfo.h>
+#include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
 
@@ -8,15 +10,41 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include <app_version.h>
 #include <stdio.h>
 
-#include "hvac.h"
-#include "temphum24.h"
 #include "ha.h"
+#include "hvac.h"
+#include "mqtt.h"
 #include "openthread.h"
+#include "reset.h"
+#include "temphum24.h"
 
+
+#define DEVICE_ID_BYTE_SIZE			8
 
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
 
+
+static int get_device_id_string(char *id_string, size_t id_string_len)
+{
+	uint8_t dev_id[DEVICE_ID_BYTE_SIZE];
+	ssize_t length;
+
+	length = hwinfo_get_device_id(dev_id, sizeof(dev_id));
+
+	if (length == -ENOTSUP) {
+		LOG_ERR("Not supported by hardware");
+		return -ENOTSUP;
+	} else if (length < 0) {
+		LOG_ERR("Error: %zd", length);
+		return length;
+	}
+
+	bin2hex(dev_id, ARRAY_SIZE(dev_id), id_string, id_string_len);
+
+	LOG_INF("CPU device id: %s", id_string);
+
+	return 0;
+}
 
 static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
 					char *sn_buf, size_t sn_buf_size)
@@ -151,9 +179,71 @@ static int hvac_click_init(hvac_t *hvac)
 	return 0;
 }
 
+static int watchdog_new_channel(const struct device *wdt)
+{
+	int ret;
+
+	struct wdt_timeout_cfg wdt_config = {
+		.window.min = 0,
+		.window.max = (3 * 60 + 40) * MSEC_PER_SEC,
+		.callback = NULL,
+		.flags = WDT_FLAG_RESET_SOC,
+	};
+
+	ret = wdt_install_timeout(wdt, &wdt_config);
+	if (ret < 0) {
+		LOG_ERR("watchdog install error");
+	}
+
+	return ret;
+}
+
+static int watchdog_init(const struct device *wdt,
+			 int *main_channel_id, int *mqtt_channel_id)
+{
+	int ret;
+
+	if (!device_is_ready(wdt)) {
+		LOG_ERR("%s: device not ready", wdt->name);
+		return -ENODEV;
+	}
+
+	ret = watchdog_new_channel(wdt);
+	if (ret < 0) {
+		LOG_ERR("Could not create a new watchdog channel");
+		return ret;
+	}
+
+	*main_channel_id = ret;
+	LOG_INF("main watchdog channel id: %d", *main_channel_id);
+
+	ret = watchdog_new_channel(wdt);
+	if (ret < 0) {
+		LOG_ERR("Could not create a new watchdog channel");
+		return ret;
+	}
+
+	*mqtt_channel_id = ret;
+	LOG_INF("mqtt watchdog channel id: %d", *mqtt_channel_id);
+
+	ret = wdt_setup(wdt, WDT_OPT_PAUSE_HALTED_BY_DBG);
+	if (ret < 0) {
+		LOG_ERR("watchdog setup error");
+		return 0;
+	}
+
+	LOG_INF("🐶 watchdog started!");
+
+	return 0;
+}
+
 int main(void)
 {
 	int ret;
+	int main_wdt_chan_id = -1, mqtt_wdt_chan_id = -1;
+	uint32_t reset_cause;
+
+	char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
 
 	temphum24_t temphum24;
 	hvac_t hvac;
@@ -162,10 +252,17 @@ int main(void)
 	char scd4x_serial_string[128];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
 
+	char device_watchdog_unique_id_string[128];
 	char hdc302x_temp_unique_id_string[128];
 	char hdc302x_hum_unique_id_string[128];
 	char scd4x_co2_unique_id_string[128];
 	char sps30_pm25_unique_id_string[128];
+
+	struct ha_sensor watchdog_triggered_sensor = {
+		.name = "Watchdog",
+		.unique_id = device_watchdog_unique_id_string,
+		.device_class = "problem",
+	};
 
 	struct ha_sensor temperature_sensor = {
 		.name = "Temperature",
@@ -194,9 +291,24 @@ int main(void)
 		.suggested_display_precision = 0,
 	};
 
-	LOG_INF("\n\n🐨 MAIN START 🐨\n");
+	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
+
+	watchdog_init(wdt, &main_wdt_chan_id, &mqtt_wdt_chan_id);
+
+	LOG_INF("\n\n🚀 MAIN START 🚀\n");
+
+	reset_cause = show_reset_cause();
+	clear_reset_cause();
 
 	openthread_enable_ready_flag();
+
+	ret = get_device_id_string(
+		device_id_hex_string,
+		ARRAY_SIZE(device_id_hex_string));
+	if (ret < 0) {
+		LOG_ERR("Could not get device ID");
+		return ret;
+	}
 
 	ret = temphum24_click_init(&temphum24);
 	if (ret < 0) {
@@ -234,6 +346,15 @@ int main(void)
 	// 	LOG_ERR("Could not get sps30 serial number string");
 	// 	return ret;
 	// }
+
+	ret = generate_unique_id(device_watchdog_unique_id_string,
+				 sizeof(device_watchdog_unique_id_string),
+				 "nrf52840", "wdt",
+				 device_id_hex_string);
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x temperature unique id");
+		return ret;
+	}
 
 	ret = generate_unique_id(hdc302x_temp_unique_id_string,
 				 sizeof(hdc302x_temp_unique_id_string),
@@ -273,11 +394,18 @@ int main(void)
 
 	while (!openthread_is_ready())
 		k_sleep(K_MSEC(100));
+	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
 
-	// Something else is not ready, not sure what
-	k_sleep(K_MSEC(100));
+	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
 
-	ha_start();
+	ha_start(device_id_hex_string);
+
+	ha_init_binary_sensor(&watchdog_triggered_sensor);
+	ha_init_sensor(&temperature_sensor);
+	ha_init_sensor(&humidity_sensor);
+	ha_init_sensor(&co2_sensor);
+
+	ha_register_sensor(&watchdog_triggered_sensor);
 	ha_register_sensor(&temperature_sensor);
 	ha_register_sensor(&humidity_sensor);
 	ha_register_sensor(&co2_sensor);
@@ -296,9 +424,13 @@ int main(void)
 	LOG_INF("💤 waiting for all sensors to be ready");
 	k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));
 
-	// We set the device online after 10 seconds so HA gets time to
-	// process the sensor registrations first.
+	// We set the device online a little after sensor registrations
+	// so HA gets time to process the sensor registrations first.
 	ha_set_online();
+
+	ha_set_binary_sensor_state(&watchdog_triggered_sensor,
+				   is_reset_cause_watchdog(reset_cause));
+	ha_send_binary_sensor_state(&watchdog_triggered_sensor);
 
 	LOG_INF("🎉 init done 🎉");
 
@@ -309,11 +441,14 @@ int main(void)
 
 	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
 
+	bool non_fatal_error = false;
+
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
 						 &temperature, &humidity);
 		if (ret < 0) {
 			LOG_WRN("Could not read temperture and humidity");
+			non_fatal_error = true;
 		}
 		else {
 			LOG_INF("HDC302x");
@@ -327,6 +462,7 @@ int main(void)
 		ret = hvac_scd40_read_measurement(&hvac, &hvac_data);
 		if (ret < 0) {
 			LOG_WRN("Could not read hvac module");
+			non_fatal_error = true;
 		}
 		else {
 			LOG_INF("SCD4x");
@@ -358,20 +494,31 @@ int main(void)
 			ret = ha_send_sensor_value(&temperature_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send temperature");
+				non_fatal_error = true;
 			}
 
 			ret = ha_send_sensor_value(&humidity_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send humidity");
+				non_fatal_error = true;
 			}
 
 			ret = ha_send_sensor_value(&co2_sensor);
 			if (ret < 0) {
 				LOG_WRN("Could not send CO2");
+				non_fatal_error = true;
 			}
 
 			number_of_readings = 0;
 		}
+
+		// It's non-fatal but the watchdog will take action if it
+		// keeps happening.
+		if (!non_fatal_error) {
+			LOG_INF("🦴 feed watchdog");
+			wdt_feed(wdt, main_wdt_chan_id);
+		}
+		non_fatal_error = false;
 
 		LOG_INF("💤 end of main loop");
 		k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));

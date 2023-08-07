@@ -395,37 +395,10 @@ static int connect_to_server(void)
 	return 0;
 }
 
-static int watchdog_init(void)
+int mqtt_watchdog_init(const struct device *watchdog, int channel_id)
 {
-	int err;
-	
-	wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
-
-	if (!device_is_ready(wdt)) {
-		LOG_ERR("%s: device not ready", wdt->name);
-		return -ENODEV;
-	}
-
-	struct wdt_timeout_cfg wdt_config = {
-		.window.min = 0,
-		.window.max = (3 * 60 + 40) * MSEC_PER_SEC,
-		.callback = NULL,
-		.flags = WDT_FLAG_RESET_SOC,
-	};
-
-	wdt_channel_id = wdt_install_timeout(wdt, &wdt_config);
-	if (wdt_channel_id < 0) {
-		LOG_ERR("watchdog install error");
-		return wdt_channel_id;
-	}
-
-	err = wdt_setup(wdt, WDT_OPT_PAUSE_HALTED_BY_DBG);
-	if (err < 0) {
-		LOG_ERR("watchdog setup error");
-		return 0;
-	}
-
-	LOG_INF("🐶 watchdog started!");
+	wdt = watchdog;
+	wdt_channel_id = channel_id;
 
 	return 0;
 }
@@ -490,8 +463,6 @@ int mqtt_init(const char *dev_id,
 	      const char *last_will_topic_string,
 	      const char *last_will_message_string)
 {
-	int ret;
-
 	device_id = dev_id;
 
 	last_will_topic.topic.utf8 = last_will_topic_string;
@@ -500,12 +471,6 @@ int mqtt_init(const char *dev_id,
 
 	last_will_message.utf8 = last_will_message_string;
 	last_will_message.size = strlen(last_will_message_string);
-
-	ret = watchdog_init();
-	if (ret < 0) {
-		LOG_ERR("could not init watchdog");
-		return ret;
-	}
 
 	return 0;
 }

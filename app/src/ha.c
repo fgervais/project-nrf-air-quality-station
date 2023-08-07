@@ -2,7 +2,6 @@
 LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 
 #include <zephyr/data/json.h>
-#include <zephyr/drivers/hwinfo.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,14 +11,16 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #include "mqtt.h"
 
 
-#define DEVICE_ID_BYTE_SIZE		8
 #define JSON_CONFIG_BUFFER_SIZE		1024
 #define UNIQUE_ID_BUFFER_SIZE		64
 
+#define SENSOR_TYPE		"sensor"
+#define BINARY_SENSOR_TYPE	"binary_sensor"
+
 #define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s"
 #define LAST_WILL_TOPIC_FORMAT_STRING MQTT_BASE_PATH_FORMAT_STRING "/available"
-#define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/sensor/%s/config"
-// #define DISCOVERY_TOPIC_FORMAT_STRING	"test/sensor/%s/config"
+#define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/%s/%s/config"
+// #define DISCOVERY_TOPIC_FORMAT_STRING	"test/%s/%s/config"
 
 #define AIR_QUALITY_DEVICE {			\
 	.identifiers = device_id_hex_string,	\
@@ -54,13 +55,8 @@ struct ha_sensor_config {
 };
 
 
-static char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
+static const char *device_id_hex_string;
 static char mqtt_base_path[HA_TOPIC_BUFFER_SIZE];
-// static char *scd4x_sn;
-// static char *sps30_sn;
-
-// static char unique_id_co2[UNIQUE_ID_BUFFER_SIZE];
-// static char unique_id_pm25[UNIQUE_ID_BUFFER_SIZE];
 
 static char last_will_topic[HA_TOPIC_BUFFER_SIZE];
 static const char *last_will_message = "offline";
@@ -112,7 +108,7 @@ static const struct json_obj_descr device_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct ha_device, manufacturer, 	JSON_TOK_STRING),
 };
 
-static const struct json_obj_descr config_descr[] = {
+static const struct json_obj_descr sensor_config_descr[] = {
 	JSON_OBJ_DESCR_PRIM_NAMED(struct ha_sensor_config, "~", base_path,	JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, name,			JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, unique_id,			JSON_TOK_STRING),
@@ -121,6 +117,17 @@ static const struct json_obj_descr config_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_class,		JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, unit_of_measurement,	JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, suggested_display_precision, JSON_TOK_NUMBER),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, availability_topic,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_topic,		JSON_TOK_STRING),
+	JSON_OBJ_DESCR_OBJECT(struct ha_sensor_config, dev, device_descr),
+};
+
+static const struct json_obj_descr binary_sensor_config_descr[] = {
+	JSON_OBJ_DESCR_PRIM_NAMED(struct ha_sensor_config, "~", base_path,	JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, name,			JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, unique_id,			JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, object_id,			JSON_TOK_STRING),
+	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, device_class,		JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, availability_topic,	JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_topic,		JSON_TOK_STRING),
 	JSON_OBJ_DESCR_OBJECT(struct ha_sensor_config, dev, device_descr),
@@ -150,26 +157,6 @@ static const struct json_obj_descr config_descr[] = {
 // 	}
 // }
 
-static int get_device_id_string(char *id_string, size_t id_string_len)
-{
-	uint8_t dev_id[DEVICE_ID_BYTE_SIZE];
-	ssize_t length;
-
-	length = hwinfo_get_device_id(dev_id, sizeof(dev_id));
-
-	if (length == -ENOTSUP) {
-		LOG_ERR("Not supported by hardware");
-		return -ENOTSUP;
-	} else if (length < 0) {
-		LOG_ERR("Error: %zd", length);
-		return length;
-	}
-
-	bin2hex(dev_id, ARRAY_SIZE(dev_id), id_string, id_string_len);
-
-	return 0;
-}
-
 // static int ha_subscribe_to_topics(void)
 // {
 // 	mqtt_subscribe_to_topic(subs, ARRAY_SIZE(subs));
@@ -182,24 +169,37 @@ static int get_device_id_string(char *id_string, size_t id_string_len)
 // Best practice for entities with a unique_id is to set <object_id> to
 // unique_id and omit the <node_id>.
 // https://www.home-assistant.io/integrations/mqtt/#discovery-topic
-
-
-static int ha_send_discovery(struct ha_sensor_config *conf)
+static int ha_send_discovery(const char *sensor_type,
+			     struct ha_sensor_config *conf)
 {
 	int ret;
 	char json_config[JSON_CONFIG_BUFFER_SIZE];
 	char discovery_topic[HA_TOPIC_BUFFER_SIZE];
 
 	snprintf(discovery_topic, sizeof(discovery_topic),
-		 DISCOVERY_TOPIC_FORMAT_STRING, conf->unique_id);
+		 DISCOVERY_TOPIC_FORMAT_STRING,
+		 sensor_type, conf->unique_id);
 
 	LOG_DBG("discovery topic: %s", discovery_topic);
 
-	ret = json_obj_encode_buf(config_descr, ARRAY_SIZE(config_descr),
-				  conf, json_config, sizeof(json_config));
-	if (ret < 0) {
-		LOG_ERR("Could not encode JSON (%d)", ret);
-		return ret;
+	if (strcmp(sensor_type, "sensor") == 0) {
+		ret = json_obj_encode_buf(
+			sensor_config_descr, ARRAY_SIZE(sensor_config_descr),
+			conf, json_config, sizeof(json_config));
+		if (ret < 0) {
+			LOG_ERR("Could not encode JSON (%d)", ret);
+			return ret;
+		}
+	}
+	else if (strcmp(sensor_type, "binary_sensor") == 0) {
+		ret = json_obj_encode_buf(
+			binary_sensor_config_descr,
+			ARRAY_SIZE(binary_sensor_config_descr),
+			conf, json_config, sizeof(json_config));
+		if (ret < 0) {
+			LOG_ERR("Could not encode JSON (%d)", ret);
+			return ret;
+		}
 	}
 
 	LOG_DBG("payload: %s", json_config);
@@ -213,58 +213,11 @@ static int ha_send_discovery(struct ha_sensor_config *conf)
 	return 0;
 }
 
-// int ha_send_current_temp(double current_temp)
-// {
-// 	char topic[strlen(ac_config.base_path)
-// 		   + strlen(ac_config.current_temperature_topic)];
-// 	char temp_string[16];
-
-// 	snprintf(topic, sizeof(topic),
-// 		 "%s%s",
-// 		 ac_config.base_path,
-// 		 ac_config.current_temperature_topic + 1);
-
-// 	snprintf(temp_string, sizeof(temp_string),
-// 		 "%g",
-// 		 current_temp);
-
-// 	mqtt_publish_to_topic(topic, temp_string, false);
-
-// 	return 0;
-// }
-
-// int ha_send_current_state(bool enabled)
-// {
-// 	char topic[strlen(ac_config.base_path)
-// 		   + strlen(ac_config.availability_topic)];
-	
-// 	snprintf(topic, sizeof(topic),
-// 		 "%s%s",
-// 		 ac_config.base_path,
-// 		 ac_config.availability_topic + 1);
-
-// 	mqtt_publish_to_topic(topic, enabled ? "online" : "offline", true);
-
-// 	return 0;
-// }
-
-int ha_start()
+int ha_start(const char *device_id)
 {
 	int ret;
 
-	// mode_change_callback = mode_change_cb;
-	// temperature_setpoint_change_callback = temperature_setpoint_change_cb;
-
-	ret = get_device_id_string(
-		device_id_hex_string,
-		ARRAY_SIZE(device_id_hex_string));
-	if (ret < 0) {
-		LOG_ERR("Could not get device ID");
-		return ret;
-	}
-
-	// LOG_INF("Device ID: %s", co2_config.dev.identifiers);
-	// LOG_INF("Version: %s", co2_config.dev.sw_version);
+	device_id_hex_string = device_id;
 
 	ret = snprintf(mqtt_base_path, sizeof(mqtt_base_path),
 		 MQTT_BASE_PATH_FORMAT_STRING, device_id_hex_string);
@@ -272,26 +225,6 @@ int ha_start()
 		LOG_ERR("Could not set mqtt_base_path");
 		return -ENOMEM;
 	}
-
-
-
-	// Wrap this in a function?
-
-	// ret = snprintf(unique_id_co2, sizeof(unique_id_co2),
-	// 	 "scd4x_%s_co2", scd4x_serial_number);
-	// if (ret < 0 && ret >= sizeof(unique_id_co2)) {
-	// 	LOG_ERR("Could not set unique_id_co2");
-	// 	return -ENOMEM;
-	// }
-
-	// ret = snprintf(unique_id_pm25, sizeof(unique_id_pm25),
-	// 	 "sps30_%s_pm25", sps30_serial_number);
-	// if (ret < 0 && ret >= sizeof(unique_id_pm25)) {
-	// 	LOG_ERR("Could not set unique_id_pm25");
-	// 	return -ENOMEM;
-	// }
-
-	// --------------------
 
 	ret = snprintf(last_will_topic, sizeof(last_will_topic),
 		 LAST_WILL_TOPIC_FORMAT_STRING, device_id_hex_string);
@@ -305,10 +238,6 @@ int ha_start()
 		LOG_ERR("could initialize MQTT");
 		return ret;
 	}
-
-	// ha_send_discovery();
-	// LOG_INF("✏️  subscribe to topics");
-	// ha_subscribe_to_topics();
 
 	return 0;
 }
@@ -328,16 +257,17 @@ int ha_set_online()
 
 int ha_init_sensor(struct ha_sensor *sensor)
 {
+	sensor->type = SENSOR_TYPE;
 	sensor->total_value = 0;
 	sensor->number_of_values = 0;
 
 	return 0;
 }
 
-int ha_add_sensor_reading(struct ha_sensor *sensor, double value)
+int ha_init_binary_sensor(struct ha_sensor *sensor)
 {
-	sensor->total_value += value;
-	sensor->number_of_values += 1;
+	sensor->type = BINARY_SENSOR_TYPE;
+	sensor->binary_state = false;
 
 	return 0;
 }
@@ -387,7 +317,8 @@ int ha_register_sensor(struct ha_sensor *sensor)
 	LOG_INF("📝 registering sensor: %s", sensor->unique_id);
 
 	ret = snprintf(brief_state_topic, sizeof(brief_state_topic),
-		       "~/sensor/%s/state", sensor->unique_id);
+		       "~/%s/%s/state",
+		       sensor->type, sensor->unique_id);
 	if (ret < 0 && ret >= sizeof(brief_state_topic)) {
 		LOG_ERR("Could not set brief_state_topic");
 		return -ENOMEM;
@@ -403,11 +334,26 @@ int ha_register_sensor(struct ha_sensor *sensor)
 	}
 
 	LOG_INF("📖 send discovery");
-	ret = ha_send_discovery(&ha_sensor_config);
+	ret = ha_send_discovery(sensor->type, &ha_sensor_config);
 	if (ret < 0) {
 		LOG_ERR("Could not send discovery");
 		return ret;
 	}
+
+	return 0;
+}
+
+int ha_add_sensor_reading(struct ha_sensor *sensor, double value)
+{
+	sensor->total_value += value;
+	sensor->number_of_values += 1;
+
+	return 0;
+}
+
+int ha_set_binary_sensor_state(struct ha_sensor *sensor, bool state)
+{
+	sensor->binary_state = state;
 
 	return 0;
 }
@@ -439,5 +385,19 @@ int ha_send_sensor_value(struct ha_sensor *sensor)
 	sensor->number_of_values = 0;
 
 out:
+	return 0;
+}
+
+int ha_send_binary_sensor_state(struct ha_sensor *sensor)
+{
+	int ret;
+
+	ret = mqtt_publish_to_topic(sensor->full_state_topic,
+		sensor->binary_state ? "ON" : "OFF", false);
+	if (ret < 0) {
+		LOG_ERR("Count not publish to topic");
+		return ret;
+	}
+
 	return 0;
 }

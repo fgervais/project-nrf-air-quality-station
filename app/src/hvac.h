@@ -119,7 +119,7 @@ extern "C"{
  */
 #define HVAC_SPS30_WORD_SIZE                                        2
 #define HVAC_SPS30_CRC8_LEN                                         1
-#define HVAC_SPS30_NUM_WORDS(x)             (sizeof(x) / SENSIRION_WORD_SIZE)
+#define HVAC_SPS30_NUM_WORDS(x)             (sizeof(x) / HVAC_SPS30_WORD_SIZE)
 #define HVAC_SPS30_MAX_SERIAL_LEN                                   32
 #define HVAC_SPS30_SERIAL_NUM_WORDS         ((HVAC_SPS30_MAX_SERIAL_LEN) / 2)
 
