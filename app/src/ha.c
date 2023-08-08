@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #define SENSOR_TYPE		"sensor"
 #define BINARY_SENSOR_TYPE	"binary_sensor"
 
-#define MQTT_BASE_PATH_FORMAT_STRING "home/room/kitchen/air_quality/%s"
+#define MQTT_BASE_PATH_FORMAT_STRING "air_quality/%s"
 #define LAST_WILL_TOPIC_FORMAT_STRING MQTT_BASE_PATH_FORMAT_STRING "/available"
 #define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/%s/%s/config"
 // #define DISCOVERY_TOPIC_FORMAT_STRING	"test/%s/%s/config"
