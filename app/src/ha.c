@@ -22,13 +22,13 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 #define DISCOVERY_TOPIC_FORMAT_STRING	"homeassistant/%s/%s/config"
 // #define DISCOVERY_TOPIC_FORMAT_STRING	"test/%s/%s/config"
 
-#define AIR_QUALITY_DEVICE {			\
-	.identifiers = device_id_hex_string,	\
-	.name = "Air Quality Monitor",		\
-	.sw_version = APP_VERSION_FULL,		\
-	.hw_version = "rev1",			\
-	.model = "Gold",			\
-	.manufacturer = "François Gervais",	\
+#define AIR_QUALITY_DEVICE {						\
+	.identifiers = device_id_hex_string,				\
+	.name = "Air Quality Monitor - " CONFIG_APP_DEVICE_NICKNAME,	\
+	.sw_version = APP_VERSION_FULL,					\
+	.hw_version = "rev1",						\
+	.model = "Gold",						\
+	.manufacturer = "François Gervais",				\
 }
 
 struct ha_device {

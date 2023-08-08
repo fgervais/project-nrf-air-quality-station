@@ -1,5 +1,10 @@
 mainmenu "Air Quality Application"
 
+config APP_DEVICE_NICKNAME
+	string "Device nickname"
+	help
+	  Device nickname.
+
 config APP_MQTT_SERVER_HOSTNAME
 	string "MQTT server hostname"
 	help
