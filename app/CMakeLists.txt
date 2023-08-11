@@ -31,4 +31,5 @@ target_sources(app PRIVATE
        src/ha.c
        src/init.c
        src/reset.c
+       src/uid.c
        src/main.c)

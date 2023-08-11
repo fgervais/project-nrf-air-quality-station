@@ -17,124 +17,14 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "openthread.h"
 #include "reset.h"
 #include "temphum24.h"
+#include "uid.h"
 
-
-#define DEVICE_ID_BYTE_SIZE			8
 
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
 
 #define RETRY_DELAY_SECONDS			10
 
-
-static int get_device_id_string(char *id_string, size_t id_string_len)
-{
-	uint8_t dev_id[DEVICE_ID_BYTE_SIZE];
-	ssize_t length;
-
-	length = hwinfo_get_device_id(dev_id, sizeof(dev_id));
-
-	if (length == -ENOTSUP) {
-		LOG_ERR("Not supported by hardware");
-		return -ENOTSUP;
-	} else if (length < 0) {
-		LOG_ERR("Error: %zd", length);
-		return length;
-	}
-
-	bin2hex(dev_id, ARRAY_SIZE(dev_id), id_string, id_string_len);
-
-	LOG_INF("CPU device id: %s", id_string);
-
-	return 0;
-}
-
-static int get_hdc302x_serial_as_string(temphum24_t *temphum_ctx,
-					char *sn_buf, size_t sn_buf_size)
-{
-	int ret;
-	uint16_t serial_number_words[3];
-
-	ret = temphum24_get_serial_number(temphum_ctx, serial_number_words);
-	if (ret < 0) {
-		LOG_ERR("temphum24: could not read hdc302x serial number");
-		return ret;
-	}
-
-	ret = snprintf(sn_buf, sn_buf_size,
-		       "%04x%04x%04x",
-		       serial_number_words[0],
-		       serial_number_words[1],
-		       serial_number_words[2]);
-	if (ret < 0 && ret >= sn_buf_size) {
-		LOG_ERR("Could not set sn_buf");
-		return -ENOMEM;
-	}
-
-	LOG_INF("HDC302x serial number: %s", sn_buf);
-	return 0;
-}
-
-static int get_scd4x_serial_as_string(hvac_t *hvac_ctx,
-				      char *sn_buf, size_t sn_buf_size)
-{
-	int ret;
-	uint16_t scd4x_serial_words[3];
-
-	ret = hvac_scd40_get_serial_number(hvac_ctx, scd4x_serial_words);
-	if (ret < 0) {
-		LOG_ERR("hvac: could not read scd4x serial number");
-		return ret;
-	}
-
-	ret = snprintf(sn_buf, sn_buf_size,
-		       "%04x%04x%04x",
-		       scd4x_serial_words[0],
-		       scd4x_serial_words[1],
-		       scd4x_serial_words[2]);
-	if (ret < 0 && ret >= sn_buf_size) {
-		LOG_ERR("Could not set sn_buf");
-		return -ENOMEM;
-	}
-
-	LOG_INF("SCD4x serial number: %s", sn_buf);
-	return 0;
-}
-
-static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
-				      char *sn_buf, size_t sn_buf_size)
-{
-	int ret;
-
-	ret = hvac_sps30_get_serial_number(hvac_ctx, sn_buf, sn_buf_size);
-	if (ret < 0) {
-		LOG_ERR("hvac: could not read sps30 serial number");
-		return ret;
-	}
-
-	LOG_INF("SPS30 serial number: %s", sn_buf);
-	return 0;
-}
-
-
-static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
-			      const char *part_number,
-			      const char *sensor_name,
-			      const char *serial_number)
-{
-	int ret;
-
-	ret = snprintf(uid_buf, uid_buf_size,
-		       "%s_%s_%s",
-		       part_number, serial_number, sensor_name);
-	if (ret < 0 && ret >= uid_buf_size) {
-		LOG_ERR("Could not set uid_buf");
-		return -ENOMEM;
-	}
-
-	LOG_INF("📇 unique id: %s", uid_buf);
-	return 0;
-}
 
 static void retry(int (*func)(struct ha_sensor *), struct ha_sensor *sensor)
 {
@@ -155,14 +45,8 @@ int main(void)
 	int main_wdt_chan_id = -1, mqtt_wdt_chan_id = -1;
 	uint32_t reset_cause;
 
-	char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
-
 	temphum24_t temphum24;
 	hvac_t hvac;
-
-	char hdc302x_serial_string[HA_UNIQUE_ID_STRING_SIZE];
-	char scd4x_serial_string[HA_UNIQUE_ID_STRING_SIZE];
-	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
 
 	struct ha_sensor watchdog_triggered_sensor = {
 		.name = "Watchdog",
@@ -209,14 +93,6 @@ int main(void)
 		return ret;
 	}
 
-	ret = get_device_id_string(
-		device_id_hex_string,
-		ARRAY_SIZE(device_id_hex_string));
-	if (ret < 0) {
-		LOG_ERR("Could not get device ID");
-		return ret;
-	}
-
 	ret = init_temphum24_click(&temphum24);
 	if (ret < 0) {
 		LOG_ERR("Could not initialize temphum24 click");
@@ -231,69 +107,52 @@ int main(void)
 
 	LOG_INF("Version: %s", APP_VERSION_FULL);
 
-	ret = get_hdc302x_serial_as_string(&temphum24,
-					   hdc302x_serial_string,
-					   sizeof(hdc302x_serial_string));
+	ret = uid_init(&temphum24, &hvac);
 	if (ret < 0) {
-		LOG_ERR("Could not get hdc302x serial number string");
+		LOG_ERR("Could not init uid module");
 		return ret;
 	}
 
-	ret = get_scd4x_serial_as_string(&hvac, scd4x_serial_string,
-					 sizeof(scd4x_serial_string));
-	if (ret < 0) {
-		LOG_ERR("Could not get scd4x serial number string");
-		return ret;
-	}
-
-	// ret = get_sps30_serial_as_string(&hvac,
-	// 				 sps30_serial_string,
-	// 				 sizeof(sps30_serial_string));
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not get sps30 serial number string");
-	// 	return ret;
-	// }
-
-	ret = generate_unique_id(watchdog_triggered_sensor.unique_id,
-				 sizeof(watchdog_triggered_sensor.unique_id),
-				 "nrf52840", "wdt",
-				 device_id_hex_string);
+	ret = uid_generate_unique_id(watchdog_triggered_sensor.unique_id,
+				     sizeof(watchdog_triggered_sensor.unique_id),
+				     "nrf52840", "wdt",
+				     uid_get_device_id());
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
 
-	ret = generate_unique_id(temperature_sensor.unique_id,
-				 sizeof(temperature_sensor.unique_id),
-				 "hdc302x", "temp",
-				 hdc302x_serial_string);
+	ret = uid_generate_unique_id(temperature_sensor.unique_id,
+				     sizeof(temperature_sensor.unique_id),
+				     "hdc302x", "temp",
+				     uid_get_hdc302x_serial());
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
 
-	ret = generate_unique_id(humidity_sensor.unique_id,
-				 sizeof(humidity_sensor.unique_id),
-				 "hdc302x", "hum",
-				 hdc302x_serial_string);
+	ret = uid_generate_unique_id(humidity_sensor.unique_id,
+				     sizeof(humidity_sensor.unique_id),
+				     "hdc302x", "hum",
+				     uid_get_hdc302x_serial());
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x humidity unique id");
 		return ret;
 	}
 
-	ret = generate_unique_id(co2_sensor.unique_id,
-				 sizeof(co2_sensor.unique_id),
-				 "scd4x", "co2",
-				 scd4x_serial_string);
+	ret = uid_generate_unique_id(co2_sensor.unique_id,
+				     sizeof(co2_sensor.unique_id),
+				     "scd4x", "co2",
+				     uid_get_scd4x_serial());
 	if (ret < 0) {
 		LOG_ERR("Could not generate scd4x unique id");
 		return ret;
 	}
 
-	// ret = generate_unique_id(sps30_pm25_unique_id_string,
-	// 			 sizeof(sps30_pm25_unique_id_string),
-	// 			 "sps30", "pm25",
-	// 			 sps30_serial_string);
+	// ret = uid_generate_unique_id(sps30_pm25_unique_id_string,
+	// 			     sizeof(sps30_pm25_unique_id_string),
+	// 			     "sps30", "pm25",
+	// 			     uid_get_sps30_serial);
 	// if (ret < 0) {
 	// 	LOG_ERR("Could not generate sps30 unique id");
 	// 	return ret;
@@ -305,7 +164,7 @@ int main(void)
 	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
 
 	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
-	ha_start(device_id_hex_string);
+	ha_start(uid_get_device_id());
 
 	ha_init_binary_sensor(&watchdog_triggered_sensor);
 	ha_init_sensor(&temperature_sensor);
