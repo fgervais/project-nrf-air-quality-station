@@ -55,3 +55,26 @@ void openthread_set_normal_latency()
 	otLinkSetPollPeriod(openthread_get_default_instance(), 0);
 	// openthread_set_csl_period_ms(CSL_NORMAL_LATENCY_PERIOD_MS);
 }
+
+int openthread_erase_persistent_info(void)
+{
+	struct openthread_context *ot_context = openthread_get_default_context();
+	otError err;
+
+	openthread_api_mutex_lock(ot_context);
+	err = otInstanceErasePersistentInfo(ot_context->instance);
+	openthread_api_mutex_unlock(ot_context);
+
+	if (err != OT_ERROR_NONE) {
+		return -1;
+	}
+
+	return 0;
+}
+
+int openthread_my_start(void)
+{
+	struct openthread_context *ot_context = openthread_get_default_context();
+
+	return openthread_start(ot_context);
+}

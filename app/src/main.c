@@ -302,6 +302,11 @@ int main(void)
 	clear_reset_cause();
 
 	openthread_enable_ready_flag();
+	ret = openthread_my_start();
+	if (ret < 0) {
+		LOG_ERR("Could not start openthread");
+		return ret;
+	}
 
 	ret = get_device_id_string(
 		device_id_hex_string,
@@ -393,6 +398,7 @@ int main(void)
 	// 	return ret;
 	// }
 
+	LOG_INF("💤 waiting for openthread to be ready");
 	while (!openthread_is_ready())
 		k_sleep(K_MSEC(100));
 	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
