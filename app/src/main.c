@@ -148,9 +148,7 @@ int main(void)
 	}
 
 	LOG_INF("💤 waiting for openthread to be ready");
-	while (!openthread_is_ready())
-		k_sleep(K_MSEC(100));
-	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
+	openthread_wait_for_ready();
 
 	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
 	ha_start(uid_get_device_id());

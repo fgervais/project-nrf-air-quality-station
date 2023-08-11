@@ -78,3 +78,13 @@ int openthread_my_start(void)
 
 	return openthread_start(ot_context);
 }
+
+int openthread_wait_for_ready(void)
+{
+	while (!openthread_is_ready())
+		k_sleep(K_MSEC(100));
+
+	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
+
+	return 0;
+}
