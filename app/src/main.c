@@ -134,10 +134,18 @@ int main(void)
 	int main_wdt_chan_id = -1, mqtt_wdt_chan_id = -1;
 	uint32_t reset_cause;
 
+	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
+
 	temphum24_t temphum24;
 	hvac_t hvac;
 
-	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
+	float temperature, humidity;
+	measuremen_data_t hvac_data;
+	mass_and_num_cnt_data_t sps30_data;
+
+	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
+	bool non_fatal_error = false;
+
 
 	init_watchdog(wdt, &main_wdt_chan_id, &mqtt_wdt_chan_id);
 
@@ -216,15 +224,6 @@ int main(void)
 	send_bianry_sensor_retry(&watchdog_triggered_sensor);
 
 	LOG_INF("🎉 init done 🎉");
-
-	float temperature, humidity;
-
-	measuremen_data_t hvac_data;
-	mass_and_num_cnt_data_t sps30_data;
-
-	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
-
-	bool non_fatal_error = false;
 
 	while (1) {
 		ret = temphum24_read_temp_and_rh(&temphum24,
