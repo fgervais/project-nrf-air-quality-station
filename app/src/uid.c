@@ -189,6 +189,8 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *hum,
 			struct ha_sensor *co2)
 {
+	int ret;
+
 	ret = generate_unique_id(wdt->unique_id,
 				     sizeof(wdt->unique_id),
 				     "nrf52840", "wdt",
@@ -233,4 +235,6 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 	// 	LOG_ERR("Could not generate sps30 unique id");
 	// 	return ret;
 	// }
+
+	return 0;
 }
