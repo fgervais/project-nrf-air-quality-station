@@ -136,52 +136,6 @@ static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
 	return 0;
 }
 
-static void scd4x_reset(hvac_t *hvac)
-{
-	hvac_scd40_send_cmd(hvac, HVAC_STOP_PERIODIC_MEASUREMENT);
-	k_sleep(K_MSEC(500));
-	hvac_scd40_send_cmd(hvac, HVAC_REINIT);
-	k_sleep(K_MSEC(30));
-}
-
-static int temphum24_click_init(temphum24_t *temphum24)
-{
-	int ret;
-	temphum24_cfg_t temphum24_cfg;
-
-	temphum24_cfg_setup(&temphum24_cfg);
-	temphum24->i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-	temphum24->rst.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
-	temphum24->alert.port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
-	temphum24_cfg.rst = 5;
-	temphum24_cfg.alert = 29;
-	ret = temphum24_init(temphum24, &temphum24_cfg);
-	if (ret < 0) {
-		LOG_ERR("Could not initialize hdc302x");
-		return ret;
-	}
-
-	return 0;
-}
-
-static int hvac_click_init(hvac_t *hvac)
-{
-	int ret;
-	hvac_cfg_t hvac_cfg;
-
-	hvac_cfg_setup(&hvac_cfg);
-	hvac->i2c.dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-	ret = hvac_init(hvac, &hvac_cfg);
-	if (ret < 0) {
-		LOG_ERR("Could not initialize hvac");
-		return ret;
-	}
-
-	scd4x_reset(hvac);
-
-	return 0;
-}
-
 static void retry(int (*func)(struct ha_sensor *), struct ha_sensor *sensor)
 {
 	int ret;
@@ -263,13 +217,13 @@ int main(void)
 		return ret;
 	}
 
-	ret = temphum24_click_init(&temphum24);
+	ret = init_temphum24_click(&temphum24);
 	if (ret < 0) {
 		LOG_ERR("Could not initialize temphum24 click");
 		return ret;
 	}
 
-	ret = hvac_click_init(&hvac);
+	ret = init_hvac_click(&hvac);
 	if (ret < 0) {
 		LOG_ERR("Could not initialize hvac click");
 		return ret;
