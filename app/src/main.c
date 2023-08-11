@@ -24,6 +24,8 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
 
+#define RETRY_DELAY_SECONDS			10
+
 
 static int get_device_id_string(char *id_string, size_t id_string_len)
 {
@@ -238,6 +240,19 @@ static int watchdog_init(const struct device *wdt,
 	return 0;
 }
 
+static void retry(int (*func)(struct ha_sensor *), struct ha_sensor *sensor)
+{
+	int ret;
+
+retry:
+	ret = func(sensor);
+	if (ret < 0) {
+		LOG_WRN("Could not execute function, retrying");
+		k_sleep(K_SECONDS(RETRY_DELAY_SECONDS));
+		goto retry;
+	}
+}
+
 int main(void)
 {
 	int ret;
@@ -404,7 +419,6 @@ int main(void)
 	k_sleep(K_MSEC(100)); // Something else is not ready, not sure what
 
 	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
-
 	ha_start(device_id_hex_string);
 
 	ha_init_binary_sensor(&watchdog_triggered_sensor);
@@ -412,10 +426,10 @@ int main(void)
 	ha_init_sensor(&humidity_sensor);
 	ha_init_sensor(&co2_sensor);
 
-	ha_register_sensor(&watchdog_triggered_sensor);
-	ha_register_sensor(&temperature_sensor);
-	ha_register_sensor(&humidity_sensor);
-	ha_register_sensor(&co2_sensor);
+	retry(ha_register_sensor, &watchdog_triggered_sensor);
+	retry(ha_register_sensor, &temperature_sensor);
+	retry(ha_register_sensor, &humidity_sensor);
+	retry(ha_register_sensor, &co2_sensor);
 
 	// 1 measurement per second
 	ret = temphum24_default_cfg(&temphum24);
@@ -433,11 +447,17 @@ int main(void)
 
 	// We set the device online a little after sensor registrations
 	// so HA gets time to process the sensor registrations first.
-	ha_set_online();
+retry_set_online:
+	ret = ha_set_online();
+	if (ret < 0) {
+		LOG_WRN("Could not set online");
+		k_sleep(K_SECONDS(RETRY_DELAY_SECONDS));
+		goto retry_set_online;
+	}
 
 	ha_set_binary_sensor_state(&watchdog_triggered_sensor,
 				   is_reset_cause_watchdog(reset_cause));
-	ha_send_binary_sensor_state(&watchdog_triggered_sensor);
+	retry(ha_send_binary_sensor_state, &watchdog_triggered_sensor);
 
 	LOG_INF("🎉 init done 🎉");
 

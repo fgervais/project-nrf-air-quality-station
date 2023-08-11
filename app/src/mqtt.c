@@ -361,7 +361,7 @@ static int get_mqtt_broker_addrinfo(void)
 			return 0;
 		}
 
-		LOG_ERR("DNS not resolved for %s:%d, retrying",
+		LOG_WRN("DNS not resolved for %s:%d, retrying",
 			CONFIG_APP_MQTT_SERVER_HOSTNAME,
 			CONFIG_APP_MQTT_SERVER_PORT);
 
