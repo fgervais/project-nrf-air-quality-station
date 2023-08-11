@@ -25,14 +25,40 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define RETRY_DELAY_SECONDS			10
 
 
-static void retry(int (*func)(struct ha_sensor *), struct ha_sensor *sensor)
+static void register_sensor_retry(struct ha_sensor *sensor)
 {
 	int ret;
 
 retry:
-	ret = func(sensor);
+	ret = ha_register_sensor(sensor);
 	if (ret < 0) {
-		LOG_WRN("Could not execute function, retrying");
+		LOG_WRN("Could not register sensor, retrying");
+		k_sleep(K_SECONDS(RETRY_DELAY_SECONDS));
+		goto retry;
+	}
+}
+
+static void send_bianry_sensor_retry(struct ha_sensor *sensor)
+{
+	int ret;
+
+retry:
+	ret = ha_send_binary_sensor_state(sensor);
+	if (ret < 0) {
+		LOG_WRN("Could not send binary sensor, retrying");
+		k_sleep(K_SECONDS(RETRY_DELAY_SECONDS));
+		goto retry;
+	}
+}
+
+static void set_online_retry(void)
+{
+	int ret;
+
+retry:
+	ret = ha_set_online();
+	if (ret < 0) {
+		LOG_WRN("Could not set online, retrying");
 		k_sleep(K_SECONDS(RETRY_DELAY_SECONDS));
 		goto retry;
 	}
@@ -134,10 +160,10 @@ int main(void)
 	ha_init_sensor(&humidity_sensor);
 	ha_init_sensor(&co2_sensor);
 
-	retry(ha_register_sensor, &watchdog_triggered_sensor);
-	retry(ha_register_sensor, &temperature_sensor);
-	retry(ha_register_sensor, &humidity_sensor);
-	retry(ha_register_sensor, &co2_sensor);
+	register_sensor_retry(&watchdog_triggered_sensor);
+	register_sensor_retry(&temperature_sensor);
+	register_sensor_retry(&humidity_sensor);
+	register_sensor_retry(&co2_sensor);
 
 	// 1 measurement per second
 	ret = temphum24_default_cfg(&temphum24);
@@ -155,17 +181,11 @@ int main(void)
 
 	// We set the device online a little after sensor registrations
 	// so HA gets time to process the sensor registrations first.
-retry_set_online:
-	ret = ha_set_online();
-	if (ret < 0) {
-		LOG_WRN("Could not set online");
-		k_sleep(K_SECONDS(RETRY_DELAY_SECONDS));
-		goto retry_set_online;
-	}
+	set_online_retry();
 
 	ha_set_binary_sensor_state(&watchdog_triggered_sensor,
 				   is_reset_cause_watchdog(reset_cause));
-	retry(ha_send_binary_sensor_state, &watchdog_triggered_sensor);
+	send_bianry_sensor_retry(&watchdog_triggered_sensor);
 
 	LOG_INF("🎉 init done 🎉");
 
