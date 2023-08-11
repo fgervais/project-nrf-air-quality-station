@@ -64,6 +64,36 @@ retry:
 	}
 }
 
+static int send_sensor_values(void)
+{
+	int ret;
+	bool non_fatal_error = false;
+
+	ret = ha_send_sensor_value(&temperature_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send temperature");
+		non_fatal_error = true;
+	}
+
+	ret = ha_send_sensor_value(&humidity_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send humidity");
+		non_fatal_error = true;
+	}
+
+	ret = ha_send_sensor_value(&co2_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send CO2");
+		non_fatal_error = true;
+	}
+
+	if (non_fatal_error) {
+		return -1;
+	}
+
+	return 0;
+}
+
 int main(void)
 {
 	int ret;
@@ -244,24 +274,7 @@ int main(void)
 
 		number_of_readings += 1;
 		if (number_of_readings >= NUMBER_OF_READINGS_IN_AVERAGE) {
-			ret = ha_send_sensor_value(&temperature_sensor);
-			if (ret < 0) {
-				LOG_WRN("Could not send temperature");
-				non_fatal_error = true;
-			}
-
-			ret = ha_send_sensor_value(&humidity_sensor);
-			if (ret < 0) {
-				LOG_WRN("Could not send humidity");
-				non_fatal_error = true;
-			}
-
-			ret = ha_send_sensor_value(&co2_sensor);
-			if (ret < 0) {
-				LOG_WRN("Could not send CO2");
-				non_fatal_error = true;
-			}
-
+			non_fatal_error |= send_sensor_values();
 			number_of_readings = 0;
 		}
 
