@@ -149,7 +149,7 @@ int main(void)
 
 	init_watchdog(wdt, &main_wdt_chan_id, &mqtt_wdt_chan_id);
 
-	LOG_INF("\n\n🚀 MAIN START 🚀\n");
+	LOG_INF("\n\n🚀 MAIN START (%s) 🚀\n", APP_VERSION_FULL);
 
 	reset_cause = show_reset_cause();
 	clear_reset_cause();
@@ -171,8 +171,6 @@ int main(void)
 		LOG_ERR("Could not initialize hvac click");
 		return ret;
 	}
-
-	LOG_INF("Version: %s", APP_VERSION_FULL);
 
 	ret = uid_init(&temphum24, &hvac);
 	if (ret < 0) {
