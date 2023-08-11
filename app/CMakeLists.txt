@@ -29,5 +29,6 @@ target_sources(app PRIVATE
        src/openthread.c
        src/mqtt.c
        src/ha.c
+       src/init.c
        src/reset.c
        src/main.c)
