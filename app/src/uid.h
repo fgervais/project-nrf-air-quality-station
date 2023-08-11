@@ -6,6 +6,8 @@
 
 #define UID_UNIQUE_ID_STRING_SIZE	32
 
+struct ha_sensor;
+
 char * uid_get_device_id(void);
 char * uid_get_hdc302x_serial(void);
 char * uid_get_scd4x_serial(void);
