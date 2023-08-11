@@ -112,50 +112,14 @@ int main(void)
 		return ret;
 	}
 
-	ret = uid_generate_unique_id(watchdog_triggered_sensor.unique_id,
-				     sizeof(watchdog_triggered_sensor.unique_id),
-				     "nrf52840", "wdt",
-				     uid_get_device_id());
+	ret = uid_fill_unique_ids(&watchdog_triggered_sensor,
+				  &temperature_sensor,
+				  &humidity_sensor,
+				  &co2_sensor);
 	if (ret < 0) {
-		LOG_ERR("Could not generate hdc302x temperature unique id");
+		LOG_ERR("Could fill unique ids");
 		return ret;
 	}
-
-	ret = uid_generate_unique_id(temperature_sensor.unique_id,
-				     sizeof(temperature_sensor.unique_id),
-				     "hdc302x", "temp",
-				     uid_get_hdc302x_serial());
-	if (ret < 0) {
-		LOG_ERR("Could not generate hdc302x temperature unique id");
-		return ret;
-	}
-
-	ret = uid_generate_unique_id(humidity_sensor.unique_id,
-				     sizeof(humidity_sensor.unique_id),
-				     "hdc302x", "hum",
-				     uid_get_hdc302x_serial());
-	if (ret < 0) {
-		LOG_ERR("Could not generate hdc302x humidity unique id");
-		return ret;
-	}
-
-	ret = uid_generate_unique_id(co2_sensor.unique_id,
-				     sizeof(co2_sensor.unique_id),
-				     "scd4x", "co2",
-				     uid_get_scd4x_serial());
-	if (ret < 0) {
-		LOG_ERR("Could not generate scd4x unique id");
-		return ret;
-	}
-
-	// ret = uid_generate_unique_id(sps30_pm25_unique_id_string,
-	// 			     sizeof(sps30_pm25_unique_id_string),
-	// 			     "sps30", "pm25",
-	// 			     uid_get_sps30_serial);
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not generate sps30 unique id");
-	// 	return ret;
-	// }
 
 	LOG_INF("💤 waiting for openthread to be ready");
 	while (!openthread_is_ready())

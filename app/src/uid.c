@@ -106,6 +106,25 @@ static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 	return 0;
 }
 
+static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
+			      const char *part_number,
+			      const char *sensor_name,
+			      const char *serial_number)
+{
+	int ret;
+
+	ret = snprintf(uid_buf, uid_buf_size,
+		       "%s_%s_%s",
+		       part_number, serial_number, sensor_name);
+	if (ret < 0 && ret >= uid_buf_size) {
+		LOG_ERR("Could not set uid_buf");
+		return -ENOMEM;
+	}
+
+	LOG_INF("📇 unique id: %s", uid_buf);
+	return 0;
+}
+
 char * uid_get_device_id(void)
 {
 	return device_id_hex_string;
@@ -124,25 +143,6 @@ char * uid_get_scd4x_serial(void)
 char * uid_get_sps30_serial(void)
 {
 	return sps30_serial_string;
-}
-
-int uid_generate_unique_id(char *uid_buf, size_t uid_buf_size,
-			   const char *part_number,
-			   const char *sensor_name,
-			   const char *serial_number)
-{
-	int ret;
-
-	ret = snprintf(uid_buf, uid_buf_size,
-		       "%s_%s_%s",
-		       part_number, serial_number, sensor_name);
-	if (ret < 0 && ret >= uid_buf_size) {
-		LOG_ERR("Could not set uid_buf");
-		return -ENOMEM;
-	}
-
-	LOG_INF("📇 unique id: %s", uid_buf);
-	return 0;
 }
 
 int uid_init(temphum24_t *temphum24, hvac_t *hvac)
@@ -181,4 +181,55 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 	// }
 
 	return 0;
+}
+
+int uid_fill_unique_ids(struct ha_sensor *wdt,
+			struct ha_sensor *temp,
+			struct ha_sensor *hum,
+			struct ha_sensor *co2)
+{
+	ret = generate_unique_id(wdt->unique_id,
+				     sizeof(wdt->unique_id),
+				     "nrf52840", "wdt",
+				     uid_get_device_id());
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x temperature unique id");
+		return ret;
+	}
+
+	ret = generate_unique_id(temp->unique_id,
+				     sizeof(temp->unique_id),
+				     "hdc302x", "temp",
+				     uid_get_hdc302x_serial());
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x temperature unique id");
+		return ret;
+	}
+
+	ret = generate_unique_id(hum->unique_id,
+				     sizeof(hum->unique_id),
+				     "hdc302x", "hum",
+				     uid_get_hdc302x_serial());
+	if (ret < 0) {
+		LOG_ERR("Could not generate hdc302x humidity unique id");
+		return ret;
+	}
+
+	ret = generate_unique_id(co2->unique_id,
+				     sizeof(co2->unique_id),
+				     "scd4x", "co2",
+				     uid_get_scd4x_serial());
+	if (ret < 0) {
+		LOG_ERR("Could not generate scd4x unique id");
+		return ret;
+	}
+
+	// ret = generate_unique_id(sps30_pm25_unique_id_string,
+	// 			     sizeof(sps30_pm25_unique_id_string),
+	// 			     "sps30", "pm25",
+	// 			     uid_get_sps30_serial);
+	// if (ret < 0) {
+	// 	LOG_ERR("Could not generate sps30 unique id");
+	// 	return ret;
+	// }
 }
