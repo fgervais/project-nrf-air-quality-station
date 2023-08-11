@@ -154,7 +154,6 @@ int main(void)
 	reset_cause = show_reset_cause();
 	clear_reset_cause();
 
-	openthread_enable_ready_flag();
 	ret = openthread_my_start();
 	if (ret < 0) {
 		LOG_ERR("Could not start openthread");

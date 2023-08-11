@@ -33,12 +33,6 @@ void openthread_set_csl_period_ms(int period_ms)
 			period_ms * 1000 / OT_US_PER_TEN_SYMBOLS);
 }
 
-void openthread_enable_ready_flag()
-{
-	openthread_state_changed_cb_register(openthread_get_default_context(),
-		&ot_state_chaged_cb);
-}
-
 bool openthread_is_ready()
 {
 	return openthread_ready;
@@ -74,7 +68,15 @@ int openthread_erase_persistent_info(void)
 
 int openthread_my_start(void)
 {
+	int ret;
 	struct openthread_context *ot_context = openthread_get_default_context();
+
+	ret = openthread_state_changed_cb_register(ot_context,
+						   &ot_state_chaged_cb);
+	if (ret < 0) {
+		LOG_ERR("Could register callback");
+		return ret;
+	}
 
 	return openthread_start(ot_context);
 }
