@@ -128,6 +128,24 @@ static int send_sensor_values(void)
 	return 0;
 }
 
+static int start_sensor_measurements(temphum24_t *temphum24, hvac_t *hvac)
+{
+	int ret;
+
+	// 1 measurement per second
+	ret = temphum24_default_cfg(temphum24);
+	if (ret < 0) {
+		LOG_ERR("Could not start hdc302x");
+		return ret;
+	}
+	// 1 measurement every 5 seconds
+	hvac_scd40_send_cmd(hvac, HVAC_START_PERIODIC_MEASUREMENT);
+	// New readings are available every second
+	// hvac_sps30_start_measurement (&hvac);
+
+	return 0;
+}
+
 int main(void)
 {
 	int ret;
@@ -198,16 +216,11 @@ int main(void)
 	register_sensor_retry(&humidity_sensor);
 	register_sensor_retry(&co2_sensor);
 
-	// 1 measurement per second
-	ret = temphum24_default_cfg(&temphum24);
+	ret = start_sensor_measurements(&temphum24, &hvac);
 	if (ret < 0) {
-		LOG_ERR("Could not start hdc302x");
+		LOG_ERR("Could not start sensor measurements");
 		return ret;
 	}
-	// 1 measurement every 5 seconds
-	hvac_scd40_send_cmd(&hvac, HVAC_START_PERIODIC_MEASUREMENT);
-	// New readings are available every second
-	// hvac_sps30_start_measurement (&hvac);
 
 	LOG_INF("💤 waiting for all sensors to be ready");
 	k_sleep(K_SECONDS(SEDONDS_IN_BETWEEN_SENSOR_READING));
