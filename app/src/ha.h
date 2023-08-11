@@ -2,12 +2,13 @@
 #define HA_H_
 
 #define HA_TOPIC_BUFFER_SIZE		128
+#define HA_UNIQUE_ID_STRING_SIZE	32
 
 struct ha_sensor {
 	// Set by user
 	const char *type;
 	const char *name;
-	const char *unique_id;
+	char unique_id[HA_UNIQUE_ID_STRING_SIZE];
 	const char *device_class;
 	const char *state_class;
 	const char *unit_of_measurement;

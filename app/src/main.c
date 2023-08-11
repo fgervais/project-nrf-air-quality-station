@@ -19,7 +19,6 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 
 #define DEVICE_ID_BYTE_SIZE			8
-#define UNIQUE_ID_STRING_SIZE			32
 
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
 #define NUMBER_OF_READINGS_IN_AVERAGE		6
@@ -264,25 +263,17 @@ int main(void)
 	temphum24_t temphum24;
 	hvac_t hvac;
 
-	char hdc302x_serial_string[UNIQUE_ID_STRING_SIZE];
-	char scd4x_serial_string[UNIQUE_ID_STRING_SIZE];
+	char hdc302x_serial_string[HA_UNIQUE_ID_STRING_SIZE];
+	char scd4x_serial_string[HA_UNIQUE_ID_STRING_SIZE];
 	char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
-
-	char device_watchdog_unique_id_string[UNIQUE_ID_STRING_SIZE];
-	char hdc302x_temp_unique_id_string[UNIQUE_ID_STRING_SIZE];
-	char hdc302x_hum_unique_id_string[UNIQUE_ID_STRING_SIZE];
-	char scd4x_co2_unique_id_string[UNIQUE_ID_STRING_SIZE];
-	char sps30_pm25_unique_id_string[UNIQUE_ID_STRING_SIZE];
 
 	struct ha_sensor watchdog_triggered_sensor = {
 		.name = "Watchdog",
-		.unique_id = device_watchdog_unique_id_string,
 		.device_class = "problem",
 	};
 
 	struct ha_sensor temperature_sensor = {
 		.name = "Temperature",
-		.unique_id = hdc302x_temp_unique_id_string,
 		.device_class = "temperature",
 		.state_class = "measurement",
 		.unit_of_measurement = "°C",
@@ -291,7 +282,6 @@ int main(void)
 
 	struct ha_sensor humidity_sensor = {
 		.name = "Humidity",
-		.unique_id = hdc302x_hum_unique_id_string,
 		.device_class = "humidity",
 		.state_class = "measurement",
 		.unit_of_measurement = "%",
@@ -300,7 +290,6 @@ int main(void)
 
 	struct ha_sensor co2_sensor = {
 		.name = "CO₂",
-		.unique_id = scd4x_co2_unique_id_string,
 		.device_class = "carbon_dioxide",
 		.state_class = "measurement",
 		.unit_of_measurement = "ppm",
@@ -368,8 +357,8 @@ int main(void)
 	// 	return ret;
 	// }
 
-	ret = generate_unique_id(device_watchdog_unique_id_string,
-				 sizeof(device_watchdog_unique_id_string),
+	ret = generate_unique_id(watchdog_triggered_sensor.unique_id,
+				 sizeof(watchdog_triggered_sensor.unique_id),
 				 "nrf52840", "wdt",
 				 device_id_hex_string);
 	if (ret < 0) {
@@ -377,8 +366,8 @@ int main(void)
 		return ret;
 	}
 
-	ret = generate_unique_id(hdc302x_temp_unique_id_string,
-				 sizeof(hdc302x_temp_unique_id_string),
+	ret = generate_unique_id(temperature_sensor.unique_id,
+				 sizeof(temperature_sensor.unique_id),
 				 "hdc302x", "temp",
 				 hdc302x_serial_string);
 	if (ret < 0) {
@@ -386,8 +375,8 @@ int main(void)
 		return ret;
 	}
 
-	ret = generate_unique_id(hdc302x_hum_unique_id_string,
-				 sizeof(hdc302x_hum_unique_id_string),
+	ret = generate_unique_id(humidity_sensor.unique_id,
+				 sizeof(humidity_sensor.unique_id),
 				 "hdc302x", "hum",
 				 hdc302x_serial_string);
 	if (ret < 0) {
@@ -395,8 +384,8 @@ int main(void)
 		return ret;
 	}
 
-	ret = generate_unique_id(scd4x_co2_unique_id_string,
-				 sizeof(scd4x_co2_unique_id_string),
+	ret = generate_unique_id(co2_sensor.unique_id,
+				 sizeof(co2_sensor.unique_id),
 				 "scd4x", "co2",
 				 scd4x_serial_string);
 	if (ret < 0) {
