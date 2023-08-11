@@ -25,6 +25,40 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define RETRY_DELAY_SECONDS			10
 
 
+static struct ha_sensor watchdog_triggered_sensor = {
+	.type = HA_BINARY_SENSOR_TYPE,
+	.name = "Watchdog",
+	.device_class = "problem",
+};
+
+static struct ha_sensor temperature_sensor = {
+	.type = HA_SENSOR_TYPE,
+	.name = "Temperature",
+	.device_class = "temperature",
+	.state_class = "measurement",
+	.unit_of_measurement = "°C",
+	.suggested_display_precision = 2,
+};
+
+static struct ha_sensor humidity_sensor = {
+	.type = HA_SENSOR_TYPE,
+	.name = "Humidity",
+	.device_class = "humidity",
+	.state_class = "measurement",
+	.unit_of_measurement = "%",
+	.suggested_display_precision = 1,
+};
+
+static struct ha_sensor co2_sensor = {
+	.type = HA_SENSOR_TYPE,
+	.name = "CO₂",
+	.device_class = "carbon_dioxide",
+	.state_class = "measurement",
+	.unit_of_measurement = "ppm",
+	.suggested_display_precision = 0,
+};
+
+
 static void register_sensor_retry(struct ha_sensor *sensor)
 {
 	int ret;
@@ -103,35 +137,6 @@ int main(void)
 	temphum24_t temphum24;
 	hvac_t hvac;
 
-	struct ha_sensor watchdog_triggered_sensor = {
-		.name = "Watchdog",
-		.device_class = "problem",
-	};
-
-	struct ha_sensor temperature_sensor = {
-		.name = "Temperature",
-		.device_class = "temperature",
-		.state_class = "measurement",
-		.unit_of_measurement = "°C",
-		.suggested_display_precision = 2,
-	};
-
-	struct ha_sensor humidity_sensor = {
-		.name = "Humidity",
-		.device_class = "humidity",
-		.state_class = "measurement",
-		.unit_of_measurement = "%",
-		.suggested_display_precision = 1,
-	};
-
-	struct ha_sensor co2_sensor = {
-		.name = "CO₂",
-		.device_class = "carbon_dioxide",
-		.state_class = "measurement",
-		.unit_of_measurement = "ppm",
-		.suggested_display_precision = 0,
-	};
-
 	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
 
 	init_watchdog(wdt, &main_wdt_chan_id, &mqtt_wdt_chan_id);
@@ -182,11 +187,6 @@ int main(void)
 
 	mqtt_watchdog_init(wdt, mqtt_wdt_chan_id);
 	ha_start(uid_get_device_id());
-
-	ha_init_binary_sensor(&watchdog_triggered_sensor);
-	ha_init_sensor(&temperature_sensor);
-	ha_init_sensor(&humidity_sensor);
-	ha_init_sensor(&co2_sensor);
 
 	register_sensor_retry(&watchdog_triggered_sensor);
 	register_sensor_retry(&temperature_sensor);

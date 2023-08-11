@@ -5,6 +5,9 @@
 
 #define HA_TOPIC_BUFFER_SIZE		128
 
+#define HA_SENSOR_TYPE				"sensor"
+#define HA_BINARY_SENSOR_TYPE		"binary_sensor"
+
 struct ha_sensor {
 	// Set by user
 	const char *type;
