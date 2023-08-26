@@ -2,6 +2,9 @@
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
+// There is an include missing in thread_analyzer.h
+// Workaround by including it lower.
+#include <zephyr/debug/thread_analyzer.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
@@ -20,7 +23,9 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 
 #define SEDONDS_IN_BETWEEN_SENSOR_READING	10
-#define NUMBER_OF_READINGS_IN_AVERAGE		6
+#define NUMBER_OF_READINGS_IN_AVERAGE		(60 / SEDONDS_IN_BETWEEN_SENSOR_READING)
+
+#define NUMBER_OF_LOOP_RUN_ANALYSIS		(5 * 60 / SEDONDS_IN_BETWEEN_SENSOR_READING)
 
 #define RETRY_DELAY_SECONDS			10
 
@@ -161,7 +166,7 @@ int main(void)
 	measuremen_data_t hvac_data;
 	mass_and_num_cnt_data_t sps30_data;
 
-	int number_of_readings = NUMBER_OF_READINGS_IN_AVERAGE;
+	uint32_t main_loop_counter = 0;
 	bool non_fatal_error = false;
 
 
@@ -171,6 +176,14 @@ int main(void)
 
 	reset_cause = show_reset_cause();
 	clear_reset_cause();
+
+	if (is_reset_cause_watchdog(reset_cause)
+	    || is_reset_cause_button(reset_cause)) {
+		ret = openthread_erase_persistent_info();
+		if (ret < 0) {
+			LOG_WRN("Could not erase openthread info");
+		}
+	}
 
 	ret = openthread_my_start();
 	if (ret < 0) {
@@ -281,11 +294,17 @@ int main(void)
 		// LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
 		// LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
 
-		number_of_readings += 1;
-		if (number_of_readings >= NUMBER_OF_READINGS_IN_AVERAGE) {
+		if (main_loop_counter % NUMBER_OF_READINGS_IN_AVERAGE == 0) {
 			non_fatal_error |= send_sensor_values();
-			number_of_readings = 0;
 		}
+
+		if (main_loop_counter % NUMBER_OF_LOOP_RUN_ANALYSIS == 0) {
+			thread_analyzer_print();
+		}
+
+		// Epilogue
+
+		main_loop_counter += 1;
 
 		// It's non-fatal but the watchdog will take action if it
 		// keeps happening.
