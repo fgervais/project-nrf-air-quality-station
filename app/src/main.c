@@ -298,8 +298,7 @@ int main(void)
 			non_fatal_error |= send_sensor_values();
 		}
 
-		if (main_loop_counter
-		    && main_loop_counter % NUMBER_OF_LOOP_RUN_ANALYSIS == 0) {
+		if (main_loop_counter % NUMBER_OF_LOOP_RUN_ANALYSIS == 0) {
 			thread_analyzer_print();
 		}
 
