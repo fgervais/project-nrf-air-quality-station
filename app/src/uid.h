@@ -17,6 +17,9 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac);
 int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *temp,
 			struct ha_sensor *hum,
-			struct ha_sensor *co2);
+			struct ha_sensor *co2,
+			struct ha_sensor *pm1_sensor,
+			struct ha_sensor *pm25_sensor,
+			struct ha_sensor *pm10_sensor);
 
 #endif /* UID_H_ */
