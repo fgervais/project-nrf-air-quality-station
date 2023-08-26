@@ -1,13 +1,18 @@
 #ifndef HA_H_
 #define HA_H_
 
+#include "uid.h"
+
 #define HA_TOPIC_BUFFER_SIZE		128
+
+#define HA_SENSOR_TYPE				"sensor"
+#define HA_BINARY_SENSOR_TYPE		"binary_sensor"
 
 struct ha_sensor {
 	// Set by user
 	const char *type;
 	const char *name;
-	const char *unique_id;
+	char unique_id[UID_UNIQUE_ID_STRING_SIZE];
 	const char *device_class;
 	const char *state_class;
 	const char *unit_of_measurement;
