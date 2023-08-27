@@ -65,7 +65,7 @@ static struct ha_sensor co2_sensor = {
 
 struct ha_sensor pm1_sensor = {
 	.type = HA_SENSOR_TYPE,
-	.name = "pm1",
+	.name = "Particles (1.0 µm)",
 	.device_class = "pm1",
 	.state_class = "measurement",
 	.unit_of_measurement = "µg/m³",
@@ -74,7 +74,7 @@ struct ha_sensor pm1_sensor = {
 
 struct ha_sensor pm25_sensor = {
 	.type = HA_SENSOR_TYPE,
-	.name = "pm25",
+	.name = "Particles (2.5 µm)",
 	.device_class = "pm25",
 	.state_class = "measurement",
 	.unit_of_measurement = "µg/m³",
@@ -83,7 +83,7 @@ struct ha_sensor pm25_sensor = {
 
 struct ha_sensor pm10_sensor = {
 	.type = HA_SENSOR_TYPE,
-	.name = "pm10",
+	.name = "Particles (10 µm)",
 	.device_class = "pm10",
 	.state_class = "measurement",
 	.unit_of_measurement = "µg/m³",
