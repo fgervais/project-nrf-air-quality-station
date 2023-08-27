@@ -519,9 +519,12 @@ uint8_t hvac_sps30_get_ready_flag ( hvac_t *ctx );
  * @param[in] ctx : Click context object.
  * See #hvac_t object definition for detailed explanation.
  * @param[out] m_n_c_data : Pointer to the memory location where structure data be stored.
- * @return Nothing.
+ * @return @li @c  0 - Success,
+ *         @li @c -1 - Error.
+ *
+ * See #err_t definition for detailed explanation.
  */
-void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data );
+err_t hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data );
 
 /**
  * @brief SPS30 read serial number.

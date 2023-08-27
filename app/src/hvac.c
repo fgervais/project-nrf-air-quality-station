@@ -430,8 +430,50 @@ uint8_t hvac_sps30_get_ready_flag ( hvac_t *ctx )
     return ready_flag;
 }
 
-void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data )
+float hvac_sps30_bytes_to_float (  const uint8_t* bytes ) {
+    uint32_t u32_value;
+
+    u32_value = (uint32_t)bytes[0] << 24 | (uint32_t)bytes[1] << 16 |
+                    (uint32_t)bytes[2] << 8 | (uint32_t)bytes[3];
+
+    return *( float * ) &u32_value;
+}
+
+err_t hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data )
 {
+    err_t error_flag;
+    uint8_t data[10][4];
+
+    // i2c_master_set_slave_address( &ctx->i2c, HVAC_SPS30_SLAVE_ADDR );
+
+
+    error_flag = hvac_sps30_i2c_read_data_as_bytes(
+                    ctx, HVAC_SPS30_I2C_READ_MEASURED_VALUE,
+                    &data[0][0], HVAC_SPS30_NUM_WORDS(data));
+    if ( error_flag )
+    {
+        return error_flag;
+    }
+
+
+    // i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
+    m_n_c_data->mass_pm_1_0 = hvac_sps30_bytes_to_float( data[0] );
+    m_n_c_data->mass_pm_2_5 = hvac_sps30_bytes_to_float( data[1] );
+    m_n_c_data->mass_pm_4_0 = hvac_sps30_bytes_to_float( data[2] );
+    m_n_c_data->mass_pm_10 = hvac_sps30_bytes_to_float( data[3] );
+    m_n_c_data->num_pm_0_5 = hvac_sps30_bytes_to_float( data[4] );
+    m_n_c_data->num_pm_1_0 = hvac_sps30_bytes_to_float( data[5] );
+    m_n_c_data->num_pm_2_5 = hvac_sps30_bytes_to_float( data[6] );
+    m_n_c_data->num_pm_4_0 = hvac_sps30_bytes_to_float( data[7] );
+    m_n_c_data->num_pm_10 = hvac_sps30_bytes_to_float( data[8] );
+    m_n_c_data->typ_ptcl_size = hvac_sps30_bytes_to_float( data[9] );
+
+    return HVAC_OK;
+}
+
+err_t __hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data )
+{
+    err_t error_flag;
     uint8_t tx_buf[ 2 ];
     uint8_t rx_buf[ 60 ];
     uint32_t temp;
@@ -439,8 +481,16 @@ void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c
     tx_buf[ 0 ] = ( uint8_t ) ( HVAC_SPS30_I2C_READ_MEASURED_VALUE >> 8 );
     tx_buf[ 1 ] = ( uint8_t ) HVAC_SPS30_I2C_READ_MEASURED_VALUE;
     i2c_master_set_slave_address( &ctx->i2c, HVAC_SPS30_SLAVE_ADDR );
-    i2c_master_write( &ctx->i2c, tx_buf, 2 );
-    i2c_master_read( &ctx->i2c, rx_buf, 60 );
+    error_flag = i2c_master_write( &ctx->i2c, tx_buf, 2 );
+    if ( error_flag < 0 )
+    {
+        return error_flag;
+    }
+    error_flag = i2c_master_read( &ctx->i2c, rx_buf, 60 );
+    if ( error_flag < 0 )
+    {
+        return error_flag;
+    }
     i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
     
     temp = dev_calc_concent( ctx, 1, rx_buf );
@@ -472,6 +522,8 @@ void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c
 
     temp = dev_calc_concent( ctx, 10, rx_buf );
     m_n_c_data->typ_ptcl_size = dev_ieee_754_floating_point_convert( temp );
+
+    return HVAC_OK;
 }
 
 err_t hvac_sps30_get_serial_number ( hvac_t *ctx, char *serial_number,
