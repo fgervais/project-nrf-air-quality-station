@@ -153,6 +153,24 @@ static int send_sensor_values(void)
 		non_fatal_error = true;
 	}
 
+	ret = ha_send_sensor_value(&pm1_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send pm1");
+		non_fatal_error = true;
+	}
+
+	ret = ha_send_sensor_value(&pm25_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send pm25");
+		non_fatal_error = true;
+	}
+
+	ret = ha_send_sensor_value(&pm10_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send pm10");
+		non_fatal_error = true;
+	}
+
 	if (non_fatal_error) {
 		return -1;
 	}
@@ -331,6 +349,10 @@ int main(void)
 			LOG_INF("│   ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
 			LOG_INF("│   └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
 			LOG_INF("└── Typical Particle Size = %.2f nm", sps30_data.typ_ptcl_size);
+		
+			ha_add_sensor_reading(&pm1_sensor, sps30_data.mass_pm_1_0);
+			ha_add_sensor_reading(&pm25_sensor, sps30_data.mass_pm_2_5);
+			ha_add_sensor_reading(&pm10_sensor, sps30_data.mass_pm_10);
 		}
 
 		if (main_loop_counter % NUMBER_OF_READINGS_IN_AVERAGE == 0) {
