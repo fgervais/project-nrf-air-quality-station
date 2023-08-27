@@ -55,7 +55,3 @@ docker compose -f docker-compose.yml -f docker-compose.device.yml \
 cd application
 pyocd flash -e sector -t nrf52840 -f 4000000 build/zephyr/zephyr.hex
 ```
-
-# Hardware
-
-https://github.com/fgervais/project-nrf-air-quality-station_hardware
