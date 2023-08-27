@@ -248,10 +248,6 @@ int main(void)
 		return ret;
 	}
 
-
-	return 0;
-
-
 	LOG_INF("💤 waiting for openthread to be ready");
 	openthread_wait_for_ready();
 
