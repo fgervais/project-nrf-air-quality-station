@@ -2,6 +2,13 @@
 
 ![overview](assets/img/overview.jpg)
 
+## Home Assistant Card
+
+This view is created automatically from the information published by the sensor
+through the MQTT discovery protocol.
+
+![Home Assistant](assets/img/ha.png)
+
 ## Boot Logs
 
 ```
