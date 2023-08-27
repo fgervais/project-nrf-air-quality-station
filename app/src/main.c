@@ -311,21 +311,27 @@ int main(void)
 			ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
 		}
 
-		hvac_sps30_read_measured_data(&hvac, &sps30_data);
+		ret = hvac_sps30_read_measured_data(&hvac, &sps30_data);
+		if (ret < 0) {
+			LOG_WRN("Could not read sps30 module");
+			non_fatal_error = true;
+		}
+		else {
+			LOG_INF("SPS30");
+			LOG_INF("├── Mass concentration");
+			LOG_INF("│   ├── PM 1.0 = %.2f μg/m³", sps30_data.mass_pm_1_0);
+			LOG_INF("│   ├── PM 2.5 = %.2f μg/m³", sps30_data.mass_pm_2_5);
+			LOG_INF("│   ├── PM 4.0 = %.2f μg/m³", sps30_data.mass_pm_4_0);
+			LOG_INF("│   └── PM 10  = %.2f μg/m³", sps30_data.mass_pm_10);
 
-		LOG_INF("SPS30");
-		LOG_INF("├── Mass concentration");
-		LOG_INF("│   ├── PM 1.0 = %.2f μg/m³", sps30_data.mass_pm_1_0);
-		LOG_INF("│   ├── PM 2.5 = %.2f μg/m³", sps30_data.mass_pm_2_5);
-		LOG_INF("│   ├── PM 4.0 = %.2f μg/m³", sps30_data.mass_pm_4_0);
-		LOG_INF("│   └── PM 10  = %.2f μg/m³", sps30_data.mass_pm_10);
-
-		LOG_INF("└── Number Concentration");
-		LOG_INF("    ├── PM 0.5 = %.2f n/cm³", sps30_data.num_pm_0_5);
-		LOG_INF("    ├── PM 1.0 = %.2f n/cm³", sps30_data.num_pm_1_0);
-		LOG_INF("    ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
-		LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
-		LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
+			LOG_INF("├── Number Concentration");
+			LOG_INF("│   ├── PM 0.5 = %.2f n/cm³", sps30_data.num_pm_0_5);
+			LOG_INF("│   ├── PM 1.0 = %.2f n/cm³", sps30_data.num_pm_1_0);
+			LOG_INF("│   ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
+			LOG_INF("│   ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
+			LOG_INF("│   └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
+			LOG_INF("└── Typical Particle Size = %.2f nm", sps30_data.typ_ptcl_size);
+		}
 
 		if (main_loop_counter % NUMBER_OF_READINGS_IN_AVERAGE == 0) {
 			non_fatal_error |= send_sensor_values();
