@@ -346,7 +346,6 @@ err_t hvac_sps30_i2c_read_data_as_bytes ( hvac_t *ctx, uint16_t reg, uint8_t *rx
     size_t i, j;
     uint8_t tx_buf[ 2 ];
     uint8_t rx_buf[ read_len ];
-    // uint16_t result;
     err_t error_flag;
 
     tx_buf[ 0 ] = ( uint8_t ) ( reg >> 8 );
@@ -371,83 +370,21 @@ err_t hvac_sps30_i2c_read_data_as_bytes ( hvac_t *ctx, uint16_t reg, uint8_t *rx
     /* check the CRC for each word */
     for ( i = 0, j = 0; i < read_len; i += HVAC_SPS30_WORD_SIZE + HVAC_SPS30_CRC8_LEN )
     {
-
-        // ret = sensirion_i2c_check_crc(&buf8[i], SENSIRION_WORD_SIZE,
-        //                               buf8[i + SENSIRION_WORD_SIZE]);
-        // if (ret != NO_ERROR)
-        //     return ret;
-
         if ( rx_buf[ i + HVAC_SPS30_WORD_SIZE ] != dev_calc_crc( &rx_buf[ i ] ) )
         {
             return HVAC_ERROR;
         }
 
-        // data[j++] = buf8[i];
-        // data[j++] = buf8[i + 1];
-
         rx_data[j++] = rx_buf[ i ];
         rx_data[j++] = rx_buf[ i + 1 ];
     }
-
-
-
-
-    // result = rx_buf[ 0 ];
-    // result <<= 8;
-    // result |= rx_buf[ 1 ];
-
-    // if ( rx_buf[ 2 ] != dev_calc_crc( &rx_buf[ 0 ] ) )
-    // {
-    //     error_flag = HVAC_ERROR;
-    // }
-
-    // *rx_data = result;
 
     return HVAC_OK;
 }
 
 err_t hvac_sps30_i2c_read_data ( hvac_t *ctx, uint16_t reg, uint16_t *rx_data )
 {
-    // uint8_t tx_buf[ 2 ];
-    // uint8_t rx_buf[ 3 ];
-    // uint16_t result;
     err_t error_flag;
-    
-    // tx_buf[ 0 ] = ( uint8_t ) ( reg >> 8 );
-    // tx_buf[ 1 ] = ( uint8_t ) reg;
-
-    // i2c_master_set_slave_address( &ctx->i2c, HVAC_SPS30_SLAVE_ADDR );
-
-    // error_flag = i2c_master_write( &ctx->i2c, tx_buf, 2 );
-    // error_flag |= i2c_master_read( &ctx->i2c, rx_buf, 3 );
-    
-    // i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
-    
-    // result = rx_buf[ 0 ];
-    // result <<= 8;
-    // result |= rx_buf[ 1 ];
-
-    // if ( rx_buf[ 2 ] != dev_calc_crc( &rx_buf[ 0 ] ) )
-    // {
-    //     error_flag = HVAC_ERROR;
-    // }
-
-    // *rx_data = result;
-
-    // return error_flag;
-
-
-
-
-
-    // int16_t ret;
-    // uint8_t i;
-
-    // ret = sensirion_i2c_read_words_as_bytes(address, (uint8_t*)data_words,
-    //                                         num_words);
-    // if (ret != NO_ERROR)
-    //     return ret;
-
 
     error_flag = hvac_sps30_i2c_read_data_as_bytes( ctx, reg,
                         ( uint8_t * ) rx_data, sizeof( *rx_data ) );
@@ -456,10 +393,8 @@ err_t hvac_sps30_i2c_read_data ( hvac_t *ctx, uint16_t reg, uint16_t *rx_data )
         return error_flag;
     }
 
-    // for (i = 0; i < num_words; ++i) {
     const uint8_t * word_bytes = ( uint8_t * ) rx_data;
     *rx_data = ( ( uint16_t ) word_bytes[0] << 8 ) | word_bytes[1];
-    // }
 
     return HVAC_OK;
 }
@@ -495,76 +430,45 @@ uint8_t hvac_sps30_get_ready_flag ( hvac_t *ctx )
     return ready_flag;
 }
 
-void hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data )
+static float hvac_sps30_bytes_to_float (  const uint8_t* bytes ) {
+    uint32_t u32_value;
+
+    u32_value = (uint32_t)bytes[0] << 24 | (uint32_t)bytes[1] << 16 |
+                    (uint32_t)bytes[2] << 8 | (uint32_t)bytes[3];
+
+    return *( float * ) &u32_value;
+}
+
+err_t hvac_sps30_read_measured_data ( hvac_t *ctx, mass_and_num_cnt_data_t *m_n_c_data )
 {
-    uint8_t tx_buf[ 2 ];
-    uint8_t rx_buf[ 60 ];
-    uint32_t temp;
+    err_t error_flag;
+    uint8_t data[10][4];
 
-    tx_buf[ 0 ] = ( uint8_t ) ( HVAC_SPS30_I2C_READ_MEASURED_VALUE >> 8 );
-    tx_buf[ 1 ] = ( uint8_t ) HVAC_SPS30_I2C_READ_MEASURED_VALUE;
-    i2c_master_set_slave_address( &ctx->i2c, HVAC_SPS30_SLAVE_ADDR );
-    i2c_master_write( &ctx->i2c, tx_buf, 2 );
-    i2c_master_read( &ctx->i2c, rx_buf, 60 );
-    i2c_master_set_slave_address( &ctx->i2c, HVAC_SCD40_SLAVE_ADDR );
-    
-    temp = dev_calc_concent( ctx, 1, rx_buf );
-    m_n_c_data->mass_pm_1_0 = dev_ieee_754_floating_point_convert( temp );
+    error_flag = hvac_sps30_i2c_read_data_as_bytes(
+                    ctx, HVAC_SPS30_I2C_READ_MEASURED_VALUE,
+                    &data[0][0], HVAC_SPS30_NUM_WORDS(data));
+    if ( error_flag )
+    {
+        return error_flag;
+    }
 
-    temp = dev_calc_concent( ctx, 2, rx_buf );
-    m_n_c_data->mass_pm_2_5 = dev_ieee_754_floating_point_convert( temp );
+    m_n_c_data->mass_pm_1_0 = hvac_sps30_bytes_to_float( data[0] );
+    m_n_c_data->mass_pm_2_5 = hvac_sps30_bytes_to_float( data[1] );
+    m_n_c_data->mass_pm_4_0 = hvac_sps30_bytes_to_float( data[2] );
+    m_n_c_data->mass_pm_10 = hvac_sps30_bytes_to_float( data[3] );
+    m_n_c_data->num_pm_0_5 = hvac_sps30_bytes_to_float( data[4] );
+    m_n_c_data->num_pm_1_0 = hvac_sps30_bytes_to_float( data[5] );
+    m_n_c_data->num_pm_2_5 = hvac_sps30_bytes_to_float( data[6] );
+    m_n_c_data->num_pm_4_0 = hvac_sps30_bytes_to_float( data[7] );
+    m_n_c_data->num_pm_10 = hvac_sps30_bytes_to_float( data[8] );
+    m_n_c_data->typ_ptcl_size = hvac_sps30_bytes_to_float( data[9] );
 
-    temp = dev_calc_concent( ctx, 3, rx_buf );
-    m_n_c_data->mass_pm_4_0 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 4, rx_buf );
-    m_n_c_data->mass_pm_10 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 5, rx_buf );
-    m_n_c_data->num_pm_0_5 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 6, rx_buf );
-    m_n_c_data->num_pm_1_0 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 7, rx_buf );
-    m_n_c_data->num_pm_2_5 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 8, rx_buf );
-    m_n_c_data->num_pm_4_0 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 9, rx_buf );
-    m_n_c_data->num_pm_10 = dev_ieee_754_floating_point_convert( temp );
-
-    temp = dev_calc_concent( ctx, 10, rx_buf );
-    m_n_c_data->typ_ptcl_size = dev_ieee_754_floating_point_convert( temp );
+    return HVAC_OK;
 }
 
 err_t hvac_sps30_get_serial_number ( hvac_t *ctx, char *serial_number,
                                     size_t serial_buffer_size )
 {
-    // int16_t error;
-
-    // error = sensirion_i2c_write_cmd(SPS30_I2C_ADDRESS, SPS_CMD_GET_SERIAL);
-
-    // if (error != NO_ERROR) {
-    //     return error;
-    // }
-
-    // error = sensirion_i2c_read_words_as_bytes(
-    //     SPS30_I2C_ADDRESS, (uint8_t*)serial, SPS30_SERIAL_NUM_WORDS);
-
-    // /* ensure a final '\0'. The firmware should always set this so this is just
-    //  * in case something goes wrong.
-    //  */
-    // serial[SPS30_MAX_SERIAL_LEN - 1] = '\0';
-
-    // return error;
-
-
-
-
-    // uint16_t rx_buf;
-    // uint8_t ready_flag;
     err_t error_flag;
 
     if ( serial_buffer_size < HVAC_SPS30_MAX_SERIAL_LEN )
@@ -580,11 +484,6 @@ err_t hvac_sps30_get_serial_number ( hvac_t *ctx, char *serial_number,
     {
         return error_flag;
     }
-
-
-    // ready_flag = ( uint8_t ) rx_buf;
-    // ready_flag &= 0x01;
-    // return ready_flag;
 
     return HVAC_OK;
 }
@@ -641,92 +540,6 @@ uint8_t dev_calc_uart_crc ( uint8_t *data_data, uint8_t len )
     }
 
     return crc;
-}
-
-uint32_t dev_calc_concent ( hvac_t *ctx, uint8_t buf_num, uint8_t *tmp_buf )
-{
-    uint32_t result;
-    uint8_t n_cnt;
-
-    if ( buf_num < 1 )
-    {
-        buf_num = 1;
-    }
-
-    if ( buf_num > 10 )
-    {
-        buf_num = 10;
-    }
-
-    buf_num--;
-    
-    n_cnt = buf_num * 6;
-
-    result = tmp_buf[ n_cnt ];
-    result <<= 8;
-    result |= tmp_buf[ n_cnt + 1 ];
-    result <<= 8;
-    result |= tmp_buf[ n_cnt + 3 ];
-    result <<= 8;
-    result |= tmp_buf[ n_cnt + 4 ];
-    
-    return result;
-}
-
-float dev_ieee_754_floating_point_convert ( uint32_t fp_data )
-{
-    uint8_t n_cnt_j;
-    uint8_t n_cnt_i;
-    float tmp;
-    uint8_t bit_bit;
-    float result;
-    int8_t exp_tmp;
-    uint8_t sign_bit;
-    uint8_t exponent;
-    float mantissa;
-
-    sign_bit = fp_data >> 31;
-    sign_bit &= 0x01;
-
-    exponent = ( uint8_t ) ( ( fp_data >> 23 ) & 0xFF );
-
-    if ( exponent > 127 )
-    {
-        exponent -= 127;
-    }
-
-    mantissa = 1.0;
-
-    for ( n_cnt_i = 1; n_cnt_i < 23; n_cnt_i++ )
-    {
-
-        bit_bit = fp_data >> ( 23 - n_cnt_i );
-        bit_bit &= 0x01;
-
-        if ( bit_bit == 1 )
-        {
-            tmp = 1.0;
-
-            for ( n_cnt_j = 0; n_cnt_j < n_cnt_i; n_cnt_j++ )
-            {
-                tmp *= 0.5;
-            }
-
-            mantissa += tmp;
-        }
-    }
-
-    result = 1.0;
-
-    while ( exponent > 0 )
-    {
-        result *= 2.0;
-        exponent--;
-    }
-
-    result *= mantissa;
-
-    return result;
 }
 
 // ------------------------------------------------------------------------- END

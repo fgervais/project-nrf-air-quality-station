@@ -63,6 +63,33 @@ static struct ha_sensor co2_sensor = {
 	.suggested_display_precision = 0,
 };
 
+struct ha_sensor pm1_sensor = {
+	.type = HA_SENSOR_TYPE,
+	.name = "Particles (1.0 µm)",
+	.device_class = "pm1",
+	.state_class = "measurement",
+	.unit_of_measurement = "µg/m³",
+	.suggested_display_precision = 2,
+};
+
+struct ha_sensor pm25_sensor = {
+	.type = HA_SENSOR_TYPE,
+	.name = "Particles (2.5 µm)",
+	.device_class = "pm25",
+	.state_class = "measurement",
+	.unit_of_measurement = "µg/m³",
+	.suggested_display_precision = 2,
+};
+
+struct ha_sensor pm10_sensor = {
+	.type = HA_SENSOR_TYPE,
+	.name = "Particles (10 µm)",
+	.device_class = "pm10",
+	.state_class = "measurement",
+	.unit_of_measurement = "µg/m³",
+	.suggested_display_precision = 2,
+};
+
 
 static void register_sensor_retry(struct ha_sensor *sensor)
 {
@@ -126,6 +153,24 @@ static int send_sensor_values(void)
 		non_fatal_error = true;
 	}
 
+	ret = ha_send_sensor_value(&pm1_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send pm1");
+		non_fatal_error = true;
+	}
+
+	ret = ha_send_sensor_value(&pm25_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send pm25");
+		non_fatal_error = true;
+	}
+
+	ret = ha_send_sensor_value(&pm10_sensor);
+	if (ret < 0) {
+		LOG_WRN("⚠️ could not send pm10");
+		non_fatal_error = true;
+	}
+
 	if (non_fatal_error) {
 		return -1;
 	}
@@ -146,7 +191,7 @@ static int start_sensor_measurements(temphum24_t *temphum24, hvac_t *hvac)
 	// 1 measurement every 5 seconds
 	hvac_scd40_send_cmd(hvac, HVAC_START_PERIODIC_MEASUREMENT);
 	// New readings are available every second
-	// hvac_sps30_start_measurement (&hvac);
+	hvac_sps30_start_measurement(hvac);
 
 	return 0;
 }
@@ -212,7 +257,10 @@ int main(void)
 	ret = uid_fill_unique_ids(&watchdog_triggered_sensor,
 				  &temperature_sensor,
 				  &humidity_sensor,
-				  &co2_sensor);
+				  &co2_sensor,
+				  &pm1_sensor,
+				  &pm25_sensor,
+				  &pm10_sensor);
 	if (ret < 0) {
 		LOG_ERR("Could fill unique ids");
 		return ret;
@@ -228,6 +276,9 @@ int main(void)
 	register_sensor_retry(&temperature_sensor);
 	register_sensor_retry(&humidity_sensor);
 	register_sensor_retry(&co2_sensor);
+	register_sensor_retry(&pm1_sensor);
+	register_sensor_retry(&pm25_sensor);
+	register_sensor_retry(&pm10_sensor);
 
 	ret = start_sensor_measurements(&temphum24, &hvac);
 	if (ret < 0) {
@@ -278,21 +329,31 @@ int main(void)
 			ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
 		}
 
-		// hvac_sps30_read_measured_data(&hvac, &sps30_data);
+		ret = hvac_sps30_read_measured_data(&hvac, &sps30_data);
+		if (ret < 0) {
+			LOG_WRN("Could not read sps30 module");
+			non_fatal_error = true;
+		}
+		else {
+			LOG_INF("SPS30");
+			LOG_INF("├── Mass concentration");
+			LOG_INF("│   ├── PM 1.0 = %.2f μg/m³", sps30_data.mass_pm_1_0);
+			LOG_INF("│   ├── PM 2.5 = %.2f μg/m³", sps30_data.mass_pm_2_5);
+			LOG_INF("│   ├── PM 4.0 = %.2f μg/m³", sps30_data.mass_pm_4_0);
+			LOG_INF("│   └── PM 10  = %.2f μg/m³", sps30_data.mass_pm_10);
 
-		// LOG_INF("SPS30");
-		// LOG_INF("├── Mass concentration");
-		// LOG_INF("│   ├── PM 1.0 = %.2f μg/m³", sps30_data.mass_pm_1_0);
-		// LOG_INF("│   ├── PM 2.5 = %.2f μg/m³", sps30_data.mass_pm_2_5);
-		// LOG_INF("│   ├── PM 4.0 = %.2f μg/m³", sps30_data.mass_pm_4_0);
-		// LOG_INF("│   └── PM 10  = %.2f μg/m³", sps30_data.mass_pm_10);
-
-		// LOG_INF("└── Number Concentration");
-		// LOG_INF("    ├── PM 0.5 = %.2f n/cm³", sps30_data.num_pm_0_5);
-		// LOG_INF("    ├── PM 1.0 = %.2f n/cm³", sps30_data.num_pm_1_0);
-		// LOG_INF("    ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
-		// LOG_INF("    ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
-		// LOG_INF("    └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
+			LOG_INF("├── Number Concentration");
+			LOG_INF("│   ├── PM 0.5 = %.2f n/cm³", sps30_data.num_pm_0_5);
+			LOG_INF("│   ├── PM 1.0 = %.2f n/cm³", sps30_data.num_pm_1_0);
+			LOG_INF("│   ├── PM 2.5 = %.2f n/cm³", sps30_data.num_pm_2_5);
+			LOG_INF("│   ├── PM 4.0 = %.2f n/cm³", sps30_data.num_pm_4_0);
+			LOG_INF("│   └── PM 10  = %.2f n/cm³", sps30_data.num_pm_10);
+			LOG_INF("└── Typical Particle Size = %.2f nm", sps30_data.typ_ptcl_size);
+		
+			ha_add_sensor_reading(&pm1_sensor, sps30_data.mass_pm_1_0);
+			ha_add_sensor_reading(&pm25_sensor, sps30_data.mass_pm_2_5);
+			ha_add_sensor_reading(&pm10_sensor, sps30_data.mass_pm_10);
+		}
 
 		if (main_loop_counter % NUMBER_OF_READINGS_IN_AVERAGE == 0) {
 			non_fatal_error |= send_sensor_values();

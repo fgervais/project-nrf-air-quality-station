@@ -173,13 +173,13 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 		return ret;
 	}
 
-	// ret = get_sps30_serial_as_string(&hvac,
-	// 				 sps30_serial_string,
-	// 				 sizeof(sps30_serial_string));
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not get sps30 serial number string");
-	// 	return ret;
-	// }
+	ret = get_sps30_serial_as_string(hvac,
+					 sps30_serial_string,
+					 sizeof(sps30_serial_string));
+	if (ret < 0) {
+		LOG_ERR("Could not get sps30 serial number string");
+		return ret;
+	}
 
 	return 0;
 }
@@ -187,54 +187,75 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *temp,
 			struct ha_sensor *hum,
-			struct ha_sensor *co2)
+			struct ha_sensor *co2,
+			struct ha_sensor *pm1_sensor,
+			struct ha_sensor *pm25_sensor,
+			struct ha_sensor *pm10_sensor)
 {
 	int ret;
 
 	ret = generate_unique_id(wdt->unique_id,
-				     sizeof(wdt->unique_id),
-				     "nrf52840", "wdt",
-				     uid_get_device_id());
+				 sizeof(wdt->unique_id),
+				 "nrf52840", "wdt",
+				 uid_get_device_id());
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
 
 	ret = generate_unique_id(temp->unique_id,
-				     sizeof(temp->unique_id),
-				     "hdc302x", "temp",
-				     uid_get_hdc302x_serial());
+				 sizeof(temp->unique_id),
+				 "hdc302x", "temp",
+				 uid_get_hdc302x_serial());
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x temperature unique id");
 		return ret;
 	}
 
 	ret = generate_unique_id(hum->unique_id,
-				     sizeof(hum->unique_id),
-				     "hdc302x", "hum",
-				     uid_get_hdc302x_serial());
+				 sizeof(hum->unique_id),
+				 "hdc302x", "hum",
+				 uid_get_hdc302x_serial());
 	if (ret < 0) {
 		LOG_ERR("Could not generate hdc302x humidity unique id");
 		return ret;
 	}
 
 	ret = generate_unique_id(co2->unique_id,
-				     sizeof(co2->unique_id),
-				     "scd4x", "co2",
-				     uid_get_scd4x_serial());
+				 sizeof(co2->unique_id),
+				 "scd4x", "co2",
+				 uid_get_scd4x_serial());
 	if (ret < 0) {
 		LOG_ERR("Could not generate scd4x unique id");
 		return ret;
 	}
 
-	// ret = generate_unique_id(sps30_pm25_unique_id_string,
-	// 			     sizeof(sps30_pm25_unique_id_string),
-	// 			     "sps30", "pm25",
-	// 			     uid_get_sps30_serial);
-	// if (ret < 0) {
-	// 	LOG_ERR("Could not generate sps30 unique id");
-	// 	return ret;
-	// }
+	ret = generate_unique_id(pm1_sensor->unique_id,
+				 sizeof(pm1_sensor->unique_id),
+				 "sps30", "pm1",
+				 uid_get_sps30_serial());
+	if (ret < 0) {
+		LOG_ERR("Could not generate pm1 unique id");
+		return ret;
+	}
+
+	ret = generate_unique_id(pm25_sensor->unique_id,
+				 sizeof(pm25_sensor->unique_id),
+				 "sps30", "pm25",
+				 uid_get_sps30_serial());
+	if (ret < 0) {
+		LOG_ERR("Could not generate pm25 unique id");
+		return ret;
+	}
+
+	ret = generate_unique_id(pm10_sensor->unique_id,
+				 sizeof(pm10_sensor->unique_id),
+				 "sps30", "pm10",
+				 uid_get_sps30_serial());
+	if (ret < 0) {
+		LOG_ERR("Could not generate pm10 unique id");
+		return ret;
+	}
 
 	return 0;
 }
