@@ -69,7 +69,7 @@ struct ha_sensor pm1_sensor = {
 	.device_class = "pm1",
 	.state_class = "measurement",
 	.unit_of_measurement = "µg/m³",
-	.suggested_display_precision = 0,
+	.suggested_display_precision = 2,
 };
 
 struct ha_sensor pm25_sensor = {
@@ -78,7 +78,7 @@ struct ha_sensor pm25_sensor = {
 	.device_class = "pm25",
 	.state_class = "measurement",
 	.unit_of_measurement = "µg/m³",
-	.suggested_display_precision = 0,
+	.suggested_display_precision = 2,
 };
 
 struct ha_sensor pm10_sensor = {
@@ -87,7 +87,7 @@ struct ha_sensor pm10_sensor = {
 	.device_class = "pm10",
 	.state_class = "measurement",
 	.unit_of_measurement = "µg/m³",
-	.suggested_display_precision = 0,
+	.suggested_display_precision = 2,
 };
 
 
