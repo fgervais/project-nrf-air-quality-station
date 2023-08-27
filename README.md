@@ -4,7 +4,7 @@
 
 ## Boot Logs
 
-```bash
+```
 *** Booting Zephyr OS build v3.3.99-ncs1 ***
 [00:00:00.113,861] <inf> init: main watchdog channel id: 0
 [00:00:00.113,891] <inf> init: mqtt watchdog channel id: 1
