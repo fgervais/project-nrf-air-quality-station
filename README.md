@@ -1,6 +1,6 @@
 # Air Quality Station
 
-![overview](assets/img/IMG_1741.JPG)
+![overview](assets/img/overview.jpg)
 
 # Project Management
 
