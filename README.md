@@ -9,6 +9,10 @@ through the MQTT discovery protocol.
 
 ![Home Assistant](assets/img/ha.png)
 
+### History
+
+![Home Assistant History](assets/img/graphs.png)
+
 ## Boot Logs
 
 ```
