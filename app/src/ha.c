@@ -338,6 +338,11 @@ int ha_set_binary_sensor_state(struct ha_sensor *sensor, bool state)
 	return 0;
 }
 
+bool ha_get_binary_sensor_state(struct ha_sensor *sensor)
+{
+	return sensor->binary_state;
+}
+
 int ha_send_sensor_value(struct ha_sensor *sensor)
 {
 	int ret;

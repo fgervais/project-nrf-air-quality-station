@@ -26,6 +26,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define NUMBER_OF_READINGS_IN_AVERAGE		(60 / SEDONDS_IN_BETWEEN_SENSOR_READING)
 
 #define NUMBER_OF_LOOP_RUN_ANALYSIS		(5 * 60 / SEDONDS_IN_BETWEEN_SENSOR_READING)
+#define NUMBER_OF_LOOP_RESET_WATCHDOG_SENSOR	(5 * 60 / SEDONDS_IN_BETWEEN_SENSOR_READING)
 
 #define RETRY_DELAY_SECONDS			10
 
@@ -361,6 +362,15 @@ int main(void)
 
 		if (main_loop_counter % NUMBER_OF_LOOP_RUN_ANALYSIS == 0) {
 			thread_analyzer_print();
+		}
+
+		if (main_loop_counter >= NUMBER_OF_LOOP_RESET_WATCHDOG_SENSOR &&
+		    ha_get_binary_sensor_state(&watchdog_triggered_sensor) == true) {
+			ha_set_binary_sensor_state(&watchdog_triggered_sensor, false);
+			ret = ha_send_binary_sensor_state(&watchdog_triggered_sensor);
+			if (ret < 0) {
+				LOG_WRN("Could not reset watchdog state");
+			}
 		}
 
 		// Epilogue
