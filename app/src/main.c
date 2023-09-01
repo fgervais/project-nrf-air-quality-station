@@ -105,7 +105,7 @@ retry:
 	}
 }
 
-static void send_bianry_sensor_retry(struct ha_sensor *sensor)
+static void send_binary_sensor_retry(struct ha_sensor *sensor)
 {
 	int ret;
 
@@ -296,7 +296,7 @@ int main(void)
 
 	ha_set_binary_sensor_state(&watchdog_triggered_sensor,
 				   is_reset_cause_watchdog(reset_cause));
-	send_bianry_sensor_retry(&watchdog_triggered_sensor);
+	send_binary_sensor_retry(&watchdog_triggered_sensor);
 
 	LOG_INF("🎉 init done 🎉");
 
@@ -367,10 +367,7 @@ int main(void)
 		if (main_loop_counter >= NUMBER_OF_LOOP_RESET_WATCHDOG_SENSOR &&
 		    ha_get_binary_sensor_state(&watchdog_triggered_sensor) == true) {
 			ha_set_binary_sensor_state(&watchdog_triggered_sensor, false);
-			ret = ha_send_binary_sensor_state(&watchdog_triggered_sensor);
-			if (ret < 0) {
-				LOG_WRN("Could not reset watchdog state");
-			}
+			send_binary_sensor_retry(&watchdog_triggered_sensor);
 		}
 
 		// Epilogue
