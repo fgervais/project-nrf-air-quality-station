@@ -184,6 +184,7 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 	return 0;
 }
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *temp,
 			struct ha_sensor *hum,
@@ -191,6 +192,12 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *pm1_sensor,
 			struct ha_sensor *pm25_sensor,
 			struct ha_sensor *pm10_sensor)
+#else
+int uid_fill_unique_ids(struct ha_sensor *wdt,
+			struct ha_sensor *temp,
+			struct ha_sensor *hum,
+			struct ha_sensor *co2)
+#endif
 {
 	int ret;
 
@@ -230,6 +237,7 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 		return ret;
 	}
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 	ret = generate_unique_id(pm1_sensor->unique_id,
 				 sizeof(pm1_sensor->unique_id),
 				 "sps30", "pm1",
@@ -256,6 +264,7 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 		LOG_ERR("Could not generate pm10 unique id");
 		return ret;
 	}
+#endif
 
 	return 0;
 }
