@@ -59,43 +59,6 @@ static char last_will_topic[HA_TOPIC_BUFFER_SIZE];
 static const char *last_will_message = "offline";
 
 
-// static void callback_sub_set_mode(const char *payload);
-// static void callback_sub_set_temperature(const char *payload);
-
-
-// static struct config co2_config = {
-// 	.base_path = mqtt_base_path,
-// 	.name = "Air Quality Monitor - CO2",
-// 	.unique_id = unique_id_co2,
-// 	.device_class = "carbon_dioxide",
-// 	.state_class = "measurement",
-// 	.availability_topic = "~/available",
-// 	.state_topic = "~/sensor/co2/state",
-// 	.dev = AIR_QUALITY_DEVICE,
-// };
-
-// static struct config pm25_config = {
-// 	.base_path = mqtt_base_path,
-// 	.name = "Air Quality Monitor",
-// 	.unique_id = unique_id_pm25,
-// 	.device_class = "pm25",
-// 	.state_class = "measurement",
-// 	.availability_topic = "~/available",
-// 	.state_topic = "~/sensor/pm25/state",
-// 	.dev = AIR_QUALITY_DEVICE,
-// };
-
-// static const struct mqtt_subscription subs[] = {
-// 	{
-// 		.topic = "home/room/kitchen/air_quality/monitor/mode/set",
-// 		.callback = callback_sub_set_mode,
-// 	},
-// 	{
-// 		.topic = "home/room/kitchen/air_quality/monitor/temperature/set",
-// 		.callback = callback_sub_set_temperature,
-// 	},
-// };
-
 static const struct json_obj_descr device_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct ha_device, identifiers,	JSON_TOK_STRING),
 	JSON_OBJ_DESCR_PRIM(struct ha_device, name,	 	JSON_TOK_STRING),
@@ -129,37 +92,6 @@ static const struct json_obj_descr binary_sensor_config_descr[] = {
 	JSON_OBJ_DESCR_PRIM(struct ha_sensor_config, state_topic,		JSON_TOK_STRING),
 	JSON_OBJ_DESCR_OBJECT(struct ha_sensor_config, dev, device_descr),
 };
-
-// static void (*mode_change_callback)(const char *mode) = NULL;
-// static void (*temperature_setpoint_change_callback)(double setpoint) = NULL;
-
-// static void callback_sub_set_mode(const char *payload)
-// {
-// 	LOG_INF("⚡ I've been called back: %s", payload);
-
-// 	if (mode_change_callback) {
-// 		mode_change_callback(payload);
-// 	}
-// }
-
-// static void callback_sub_set_temperature(const char *payload)
-// {
-// 	double temperature;
-
-// 	LOG_INF("⚡ I've been called back: %s", payload);
-
-// 	if (temperature_setpoint_change_callback) {
-// 		temperature = atof(payload);
-// 		temperature_setpoint_change_callback(temperature);
-// 	}
-// }
-
-// static int ha_subscribe_to_topics(void)
-// {
-// 	mqtt_subscribe_to_topic(subs, ARRAY_SIZE(subs));
-
-// 	return 0;
-// }
 
 // <discovery_prefix>/<component>/[<node_id>/]<object_id>/config
 //
