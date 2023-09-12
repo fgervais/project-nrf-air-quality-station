@@ -35,6 +35,7 @@ static struct ha_sensor watchdog_triggered_sensor = {
 	.type = HA_BINARY_SENSOR_TYPE,
 	.name = "Watchdog",
 	.device_class = "problem",
+	.retain = true,
 };
 
 static struct ha_sensor temperature_sensor = {

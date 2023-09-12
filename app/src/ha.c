@@ -175,7 +175,7 @@ int ha_set_online()
 {
 	int ret;
 
-	ret = mqtt_publish_to_topic(last_will_topic, "online", false);
+	ret = mqtt_publish_to_topic(last_will_topic, "online", true);
 	if (ret < 0) {
 		LOG_ERR("Count not publish to topic");
 		return ret;
@@ -292,7 +292,8 @@ int ha_send_sensor_value(struct ha_sensor *sensor)
 		return -ENOMEM;
 	}
 
-	ret = mqtt_publish_to_topic(sensor->full_state_topic, value_string, false);
+	ret = mqtt_publish_to_topic(sensor->full_state_topic,
+		value_string, sensor->retain);
 	if (ret < 0) {
 		LOG_ERR("Count not publish to topic");
 		return ret;
@@ -310,7 +311,7 @@ int ha_send_binary_sensor_state(struct ha_sensor *sensor)
 	int ret;
 
 	ret = mqtt_publish_to_topic(sensor->full_state_topic,
-		sensor->binary_state ? "ON" : "OFF", false);
+		sensor->binary_state ? "ON" : "OFF", sensor->retain);
 	if (ret < 0) {
 		LOG_ERR("Count not publish to topic");
 		return ret;
