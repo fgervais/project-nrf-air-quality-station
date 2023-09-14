@@ -17,6 +17,7 @@ struct ha_sensor {
 	const char *state_class;
 	const char *unit_of_measurement;
 	int suggested_display_precision;
+	bool retain;
 
 	// Internal use
 	double total_value;

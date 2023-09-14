@@ -35,6 +35,7 @@ static struct ha_sensor watchdog_triggered_sensor = {
 	.type = HA_BINARY_SENSOR_TYPE,
 	.name = "Watchdog",
 	.device_class = "problem",
+	.retain = true,
 };
 
 static struct ha_sensor temperature_sensor = {
@@ -64,6 +65,7 @@ static struct ha_sensor co2_sensor = {
 	.suggested_display_precision = 0,
 };
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 struct ha_sensor pm1_sensor = {
 	.type = HA_SENSOR_TYPE,
 	.name = "Particles (1.0 µm)",
@@ -90,6 +92,7 @@ struct ha_sensor pm10_sensor = {
 	.unit_of_measurement = "µg/m³",
 	.suggested_display_precision = 2,
 };
+#endif
 
 
 static void register_sensor_retry(struct ha_sensor *sensor)
@@ -154,6 +157,7 @@ static int send_sensor_values(void)
 		non_fatal_error = true;
 	}
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 	ret = ha_send_sensor_value(&pm1_sensor);
 	if (ret < 0) {
 		LOG_WRN("⚠️ could not send pm1");
@@ -171,6 +175,7 @@ static int send_sensor_values(void)
 		LOG_WRN("⚠️ could not send pm10");
 		non_fatal_error = true;
 	}
+#endif
 
 	if (non_fatal_error) {
 		return -1;
@@ -191,8 +196,10 @@ static int start_sensor_measurements(temphum24_t *temphum24, hvac_t *hvac)
 	}
 	// 1 measurement every 5 seconds
 	hvac_scd40_send_cmd(hvac, HVAC_START_PERIODIC_MEASUREMENT);
+#ifdef CONFIG_APP_ENABLE_SPS30
 	// New readings are available every second
 	hvac_sps30_start_measurement(hvac);
+#endif
 
 	return 0;
 }
@@ -210,7 +217,9 @@ int main(void)
 
 	float temperature, humidity;
 	measuremen_data_t hvac_data;
+#ifdef CONFIG_APP_ENABLE_SPS30
 	mass_and_num_cnt_data_t sps30_data;
+#endif
 
 	uint32_t main_loop_counter = 0;
 	bool non_fatal_error = false;
@@ -255,6 +264,7 @@ int main(void)
 		return ret;
 	}
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 	ret = uid_fill_unique_ids(&watchdog_triggered_sensor,
 				  &temperature_sensor,
 				  &humidity_sensor,
@@ -262,6 +272,12 @@ int main(void)
 				  &pm1_sensor,
 				  &pm25_sensor,
 				  &pm10_sensor);
+#else
+	ret = uid_fill_unique_ids(&watchdog_triggered_sensor,
+				  &temperature_sensor,
+				  &humidity_sensor,
+				  &co2_sensor);
+#endif
 	if (ret < 0) {
 		LOG_ERR("Could fill unique ids");
 		return ret;
@@ -277,9 +293,11 @@ int main(void)
 	register_sensor_retry(&temperature_sensor);
 	register_sensor_retry(&humidity_sensor);
 	register_sensor_retry(&co2_sensor);
+#ifdef CONFIG_APP_ENABLE_SPS30
 	register_sensor_retry(&pm1_sensor);
 	register_sensor_retry(&pm25_sensor);
 	register_sensor_retry(&pm10_sensor);
+#endif
 
 	ret = start_sensor_measurements(&temphum24, &hvac);
 	if (ret < 0) {
@@ -330,6 +348,7 @@ int main(void)
 			ha_add_sensor_reading(&co2_sensor, hvac_data.co2_concent);
 		}
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 		ret = hvac_sps30_read_measured_data(&hvac, &sps30_data);
 		if (ret < 0) {
 			LOG_WRN("Could not read sps30 module");
@@ -355,6 +374,7 @@ int main(void)
 			ha_add_sensor_reading(&pm25_sensor, sps30_data.mass_pm_2_5);
 			ha_add_sensor_reading(&pm10_sensor, sps30_data.mass_pm_10);
 		}
+#endif
 
 		if (main_loop_counter % NUMBER_OF_READINGS_IN_AVERAGE == 0) {
 			non_fatal_error |= send_sensor_values();

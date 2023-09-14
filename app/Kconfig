@@ -27,4 +27,9 @@ config APP_POLL_THREAD_STACK_SIZE
 	help
 	  Poll thread stack size.
 
+config APP_ENABLE_SPS30
+	bool "Enable particles sensor (SPS30)"
+	help
+	  Enable particles sensor.
+
 source "Kconfig.zephyr"

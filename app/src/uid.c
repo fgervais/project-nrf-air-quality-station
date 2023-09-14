@@ -15,7 +15,9 @@ static char device_id_hex_string[DEVICE_ID_BYTE_SIZE * 2 + 1];
 
 static char hdc302x_serial_string[UID_UNIQUE_ID_STRING_SIZE];
 static char scd4x_serial_string[UID_UNIQUE_ID_STRING_SIZE];
+#ifdef CONFIG_APP_ENABLE_SPS30
 static char sps30_serial_string[HVAC_SPS30_MAX_SERIAL_LEN];
+#endif
 
 
 static int get_device_id_as_string(char *id_string, size_t id_string_len)
@@ -92,6 +94,7 @@ static int get_scd4x_serial_as_string(hvac_t *hvac_ctx,
 	return 0;
 }
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 				      char *sn_buf, size_t sn_buf_size)
 {
@@ -106,6 +109,7 @@ static int get_sps30_serial_as_string(hvac_t *hvac_ctx,
 	LOG_INF("SPS30 serial number: %s", sn_buf);
 	return 0;
 }
+#endif
 
 static int generate_unique_id(char *uid_buf, size_t uid_buf_size,
 			      const char *part_number,
@@ -141,10 +145,12 @@ char * uid_get_scd4x_serial(void)
 	return scd4x_serial_string;
 }
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 char * uid_get_sps30_serial(void)
 {
 	return sps30_serial_string;
 }
+#endif
 
 int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 {
@@ -173,6 +179,7 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 		return ret;
 	}
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 	ret = get_sps30_serial_as_string(hvac,
 					 sps30_serial_string,
 					 sizeof(sps30_serial_string));
@@ -180,10 +187,12 @@ int uid_init(temphum24_t *temphum24, hvac_t *hvac)
 		LOG_ERR("Could not get sps30 serial number string");
 		return ret;
 	}
+#endif
 
 	return 0;
 }
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *temp,
 			struct ha_sensor *hum,
@@ -191,6 +200,12 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 			struct ha_sensor *pm1_sensor,
 			struct ha_sensor *pm25_sensor,
 			struct ha_sensor *pm10_sensor)
+#else
+int uid_fill_unique_ids(struct ha_sensor *wdt,
+			struct ha_sensor *temp,
+			struct ha_sensor *hum,
+			struct ha_sensor *co2)
+#endif
 {
 	int ret;
 
@@ -230,6 +245,7 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 		return ret;
 	}
 
+#ifdef CONFIG_APP_ENABLE_SPS30
 	ret = generate_unique_id(pm1_sensor->unique_id,
 				 sizeof(pm1_sensor->unique_id),
 				 "sps30", "pm1",
@@ -256,6 +272,7 @@ int uid_fill_unique_ids(struct ha_sensor *wdt,
 		LOG_ERR("Could not generate pm10 unique id");
 		return ret;
 	}
+#endif
 
 	return 0;
 }
