@@ -21,7 +21,7 @@ LOG_MODULE_REGISTER(home_assistant, LOG_LEVEL_DBG);
 
 #define AIR_QUALITY_DEVICE {						\
 	.identifiers = device_id_hex_string,				\
-	.name = "Air Quality Monitor - " CONFIG_APP_DEVICE_NICKNAME,	\
+	.name = "Air Quality Monitor",					\
 	.sw_version = APP_VERSION_FULL,					\
 	.hw_version = "rev1",						\
 	.model = "Gold",						\
